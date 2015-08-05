@@ -1,4 +1,5 @@
 library(ogbox)
+library(stringr)
 sourceGithub(OganM,toSource,'GOAD/goadDifGenes')
 
 microglialException = function(restDir=NULL, genelist = NULL ,updateList = F, cores = 1){
