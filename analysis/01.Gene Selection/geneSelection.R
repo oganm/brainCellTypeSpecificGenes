@@ -94,7 +94,6 @@ for (n in 1:len(allGenes)){
     }
 }
 
-
 microglialException('analysis/01.Gene Selection/FinalGenes1/',cores=16)
 microglialException('analysis/01.Gene Selection/FinalGenes2/',cores=16)
 file.rename('analysis/01.Gene Selection/FinalGenes1/','analysis/01.Gene Selection/FinalGenes/')
