@@ -1,3 +1,4 @@
+# table 1
 library(knitr)
 
 design = read.design('data//meltedDesign.tsv')
@@ -14,5 +15,7 @@ toPrint[,1:6] = apply(toPrint[1:6], 2, function(x){
         }
     })
 })
-kable(toPrint, align= 'c')
 
+fileCon = file('analysis/07.Tables//table_1.md')
+writeLines(kable(toPrint, align= 'c'), fileCon)
+close(fileCon)
