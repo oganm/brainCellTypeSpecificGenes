@@ -1,6 +1,6 @@
 # brainCellTypeSpecificGenes
 
-This project aims to identify cell type specific genes of the brain, verify them in independent datasets, and use them to estimate cell type proportions. This repository currently hosts the [raw and pre-processed data](data) and [genes selected as cell type markers](/analysis/01.Gene Selection/FinalGenes/PyramidalDeep/) in different brain regions. The rest of the project is in the extremely hard to navigate [oganm/masterOfCellTypes](https://github.com/oganm/masterOfCellTypes) repository.
+This project aims to identify cell type specific genes of the brain, verify them in independent datasets, and use them to estimate cell type proportions. This repository currently hosts the [raw and pre-processed data](data) and [genes selected as cell type markers](/analysis/01.Gene Selection/FinalGenes/PyramidalDeep/) in different brain regions. The rest of the project is currently being migrated from the extremely hard to navigate [oganm/masterOfCellTypes](https://github.com/oganm/masterOfCellTypes) repository.
 
 Data folder holds raw and pre-processed data. Outputs of other analysis steps can be found in their respective directories
 
