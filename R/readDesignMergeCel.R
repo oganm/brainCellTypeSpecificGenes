@@ -40,7 +40,7 @@ readMouseCel = function(GSMs,mouseDir='cel',file=NA){
     
 }
 
-readDesignMergeCel = function (desFile, namingCol, celRegex, celDir,tinyChip, expFile,desOut){
+readDesignMergeCel = function (desFile, normalize, celRegex, celDir, expFile,desOut){
     #always have gsms in the first collumn
 
     require(affy)
@@ -48,7 +48,7 @@ readDesignMergeCel = function (desFile, namingCol, celRegex, celDir,tinyChip, ex
 
     design = read.table(desFile,quote='',header=T,sep='\t')
 
-    design = design[!is.na(design[,namingCol]),]
+    design = design[(design[,normalize]),]
 
     gsms = regmatches(design[, 1], gregexpr(celRegex, design[, 1],perl=T))
     if (any(lapply(gsms,len)==0)){
@@ -98,13 +98,13 @@ readDesignMergeCel = function (desFile, namingCol, celRegex, celDir,tinyChip, ex
 
 
 # for changes in original design file that only involves naming. do not run the whole thing again
-meltDesign = function(desFile, namingCol, celRegex, exprFile, outFile){
+meltDesign = function(desFile, normalize, celRegex, exprFile, outFile){
     expr = read.csv(exprFile , header = T)
     list[gene,expres] = sepExpr(expr)
     header =  colnames(expres)
 
     design = read.table(desFile,quote='',header=T,sep='\t')
-    design = design[!is.na(design[,namingCol]),]
+    design = design[(design[,normalize]),]
     gsms = regmatches(design[, 1], gregexpr(celRegex, design[, 1],perl=T))
     if (any(lapply(gsms,len)==0)){
         print('No cel names could be captured from the following rows')
