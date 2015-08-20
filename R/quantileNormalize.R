@@ -1,5 +1,5 @@
 quantileNorm = function(whichFile,outFile=NULL){
-    require(preprocessCore)
+    library(preprocessCore)
     if (is.character(whichFile)){
         allDataPre = read.csv(whichFile, header = T)
     } else{
