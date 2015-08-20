@@ -249,7 +249,7 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
             })  
   
             fMarker = data.frame(geneData$Gene.Symbol[isMarker], groupAverages[j,isMarker], apply(groupAverages[-j,isMarker,drop=F],2,max), apply(groupAverages[-j,isMarker,drop=F],2,min))
-            fChange = foldChange(groupAverages[j, ], groupAverages[-j,] )
+            fChange = foldChange(groupAverages[j, ], groupAverages[-j,,drop=F] )
             fChangePrint = data.frame(geneNames = geneData$Gene.Symbol[fChange$index], geneFoldChange= fChange$foldChange )
             fChangePrint = fChangePrint[order(fChangePrint$geneFoldChange, decreasing=T) ,]
             
