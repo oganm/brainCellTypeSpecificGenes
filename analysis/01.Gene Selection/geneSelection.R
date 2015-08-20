@@ -9,17 +9,19 @@ geneOut = 'analysis//01.Gene Selection/Fold'
 rotationOut = 'analysis//01.Gene Selection/Rotation'
 rotSelOut = 'analysis/01.Gene Selection/RotSel'
 
-groupNames = c('GabaDeep','PyramidalDeep')
+#groupNames = c('GabaDeep','PyramidalDeep','MajorType')
+groupNames = 'MajorType'
 regionNames = 'Region'
+# many steps requires parallel processes. set to cores cores by default
+cores = 15
 dir.create(geneOut, showWarnings=F, recursive=T)
-
 
 geneSelect(paste0(dataDir,'/meltedDesign.tsv'),
            paste0(dataDir,'/','finalExp.csv'),
            geneOut,
            groupNames,
            regionNames,
-           cores=16#,
+           cores=cores#,
            #debug='Forebrain_GabaDeep'
            )
 
@@ -28,7 +30,7 @@ geneSelect(paste0(dataDir,'/meltedDesign2.tsv'),
            paste0(geneOut,2),
            groupNames,
            regionNames,
-           cores=16#,
+           cores=cores#,
            #debug = 'Cerebellum_PyramidalDeep'
            )
 
@@ -43,10 +45,10 @@ for (i in 1:500){
                groupNames,
                regionNames,
                rotate=0.33,
-               cores=15#,
+               cores=cores#,
                #debug="Cortex_GabaDeep"
     )
-    #microglialException(paste0(rotationOut,'/',i),cores=15)
+    #microglialException(paste0(rotationOut,'/',i),cores=cores)
 }
 
 for (i in 1:500){
@@ -57,14 +59,14 @@ for (i in 1:500){
                groupNames,
                regionNames,
                rotate=0.33,
-               cores=15)
-    #microglialException(paste0(rotationOut,'2','/',i),cores=16)
+               cores=cores)
+    #microglialException(paste0(rotationOut,'2','/',i),cores=cores)
     
 }
 
 
-rotateSelect(rotationOut,rotSelOut, cores = 15)
-rotateSelect(paste0(rotationOut,2),paste0(rotSelOut,2), cores = 15)
+rotateSelect(rotationOut,rotSelOut, cores = cores)
+rotateSelect(paste0(rotationOut,2),paste0(rotSelOut,2), cores = cores)
 
 allGenes = list(genes1 = allPuristOut(paste0(rotSelOut,'/Relax')) , genes2 = allPuristOut(paste0(rotSelOut,'2','/Relax')))
 for (n in 1:len(allGenes)){
@@ -94,6 +96,6 @@ for (n in 1:len(allGenes)){
     }
 }
 
-microglialException('analysis/01.Gene Selection/FinalGenes1/',cores=16)
-microglialException('analysis/01.Gene Selection/FinalGenes2/',cores=16)
+microglialException('analysis/01.Gene Selection/FinalGenes1/',cores=cores)
+microglialException('analysis/01.Gene Selection/FinalGenes2/',cores=cores)
 file.rename('analysis/01.Gene Selection/FinalGenes1/','analysis/01.Gene Selection/FinalGenes/')
