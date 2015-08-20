@@ -6,25 +6,40 @@ source('R/mostVariable.R')
 source('R/sexFind.R')
 
 
+# this variable is there in case you just make some minor changes in the normalization process and want to create the
+# meltedDesign file again. If you flip this to false, normalization won't occur and only the design file will be 
+# generated
 skipNorm = F
+# this variable dictates if gemma annotations and homology information will be downloaded. only set this true when you 
+# are running the pipeline for the first time
+skipDown = F
+
+# this is the name of your main design file
 desFile = 'data/Design.tsv'
-namingCol = 'Normalize'
-namingCol2 = 'Normalize2.0'
+# this controls which collumn will be used to normalize. Just have a collumn that has T or F  in it depending on what
+# you want to do with that particular sample. Only useful if you want to keep things in your list but you don't actually 
+# want to use it
+normalize = 'Normalize'
+normalize2 = 'Normalize2.0'
+
+# if all your names start with GSM all you need is (GSM.*?(?=,|$)). Chooses file identifiers from the first collumn.
+# must match your filenames
 celRegex='(GSM.*?(?=,|$))|(PC\\d....)|(Y[+].*?((?=(,))|\\d+))|((?<=:)|(?<=[,]))A((9)|(10))_[0-9]{1,}_Chee_S1_M430A|(v2_(?![G,H,r]).*?((?=(,))|($)))|(SSC.*?((?=(,))|($)))|(MCx.*?((?=(,))|($)))|(Cbx.*?((?=(,))|($)))'
+# which directory to look for cel files
 celDir = 'data/cel'
-tinyChip = 'mouse430a2.db'
 # outFolder = 'analysis/00.Preprocessing/output/'
 outFolder = 'data/'
+
 
 
 dir.create(outFolder, showWarnings=F, recursive=T)
 # normalization ----
 if (skipNorm == F){
-    readDesignMergeCel(desFile, namingCol, celRegex, celDir,tinyChip, 
+    readDesignMergeCel(desFile, normalize, celRegex, celDir, 
                        paste0(outFolder, 'rmaExp.csv'),
                        paste0(outFolder,'meltedDesign.tsv'))
     
-    readDesignMergeCel(desFile, namingCol2, celRegex, celDir,tinyChip,
+    readDesignMergeCel(desFile, normalize2, celRegex, celDir,
                        paste0(outFolder, 'rmaExp2.csv'),
                        paste0(outFolder,'meltedDesign2.tsv'))
     
@@ -58,8 +73,8 @@ if (skipNorm == F){
 
 if (skipNorm == T){
     source('readDesignMergeCel.R')
-    meltDesign(desFile, namingCol, celRegex, paste0(outFolder,'/',finalExp), paste0(outFolder,'/meltedDesign.tsv'))
-    meltDesign(desFile, namingCol2, celRegex, paste0(outFolder,'/','finalExp2.csv'), paste0(outFolder,'/meltedDesign2.tsv'))
+    meltDesign(desFile, normalize, celRegex, paste0(outFolder,'/','finalExp.csv'), paste0(outFolder,'/meltedDesign.tsv'))
+    meltDesign(desFile, normalize2, celRegex, paste0(outFolder,'/','finalExp2.csv'), paste0(outFolder,'/meltedDesign2.tsv'))
     
 }
 
