@@ -19,3 +19,22 @@ toPrint[,1:6] = apply(toPrint[1:6], 2, function(x){
 fileCon = file('analysis/07.Tables//table_1.md')
 writeLines(kable(toPrint, align= 'c'), fileCon)
 close(fileCon)
+
+# before our additions
+before = design[1:136,]
+toPrint = table(before[c('PyramidalDeep','Method')])>1
+
+toPrint = data.frame(toPrint, Studies =apply(table(before[c('PyramidalDeep','Reference')])>1,1,sum))
+toPrint[,1:6] = apply(toPrint[1:6], 2, function(x){
+    sapply(x,function(x){
+        if (x){
+            "✔"
+        } else {
+            ""
+        }
+    })
+})
+
+fileCon = file('analysis/07.Tables//table_1.5.md')
+writeLines(kable(toPrint, align= 'c'), fileCon)
+close(fileCon)
