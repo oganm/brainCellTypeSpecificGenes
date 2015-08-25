@@ -10,9 +10,6 @@ source('R/sexFind.R')
 # meltedDesign file again. If you flip this to false, normalization won't occur and only the design file will be 
 # generated
 skipNorm = F
-# this variable dictates if gemma annotations and homology information will be downloaded. only set this true when you 
-# are running the pipeline for the first time
-skipDown = F
 
 # this is the name of your main design file
 desFile = 'data/Design.tsv'
@@ -81,7 +78,7 @@ if (skipNorm == T){
 
 sexFind(paste0(outFolder,'/meltedDesign.tsv'),
         paste0(outFolder,'/meltedDesign.tsv'),
-        paste0(outFolder,'/',finalExp))
+        paste0(outFolder,'/','finalExp.csv'))
 
 sexFind(paste0(outFolder,'/meltedDesign2.tsv'),
         paste0(outFolder,'/meltedDesign2.tsv'),
