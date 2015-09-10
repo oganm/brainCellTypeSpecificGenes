@@ -1,4 +1,5 @@
 # requires internet connection to get n if it is not provided
+# a general puprose soft parser that will break if people placed columns in weird places
 library(RCurl)
 library(ogbox)
 softParser = function(softFile, # file to read
