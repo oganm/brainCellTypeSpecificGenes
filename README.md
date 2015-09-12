@@ -8,6 +8,8 @@ Data folder holds raw and pre-processed data. Outputs of other analysis steps ca
 * ogbox (see below)
 * stringr
 * affy
+* oligo
+* RCurl
 * compare
 * preprocessCore
 * foreach
@@ -15,6 +17,14 @@ Data folder holds raw and pre-processed data. Outputs of other analysis steps ca
 * parallel
 * cluster
 * reshape2
+* knitr
+* ggplot2
+* corpcor
+* data.table
+* igraph
+* RBGL
+
+
 
 ogbox is a general purpose package that is written for personal use. Hence it is not on CRAN. To get it, you need to install devtools if you don't have it already
 
