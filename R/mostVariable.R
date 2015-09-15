@@ -38,16 +38,21 @@ mostVariableCT = function(whichFile,outFile=NULL,selectionNaming, design='data/m
 
 # this function is a generic function that looks for the most variable probeset
 # of a gene. unlike the previous one, it takes in objects and outputs objects 
-mostVariable = function(allDataPre,genes = 'Gene.Symbol'){
+mostVariable = function(allDataPre,genes = 'Gene.Symbol', treshold = 6){
     list[,exprData]= sepExpr(allDataPre)
     rowmax = apply(exprData, 1, max)
-    discludeGenes = (rowmax<6)
+    discludeGenes = (rowmax<treshold)
     allDataPre = allDataPre[!discludeGenes,]
     exprData = exprData[!discludeGenes,]
     
     decreasingVar = order(apply(exprData,1,var), decreasing = T)
     allDataPre = allDataPre[decreasingVar,]
-    allDataPre = allDataPre[!duplicated(allDataPre[,genes]),]
+    if (class(allDataPre)[1]=='data.table'){
+        allDataPre = allDataPre[!duplicated(allDataPre[,genes, with=F]),]
+    } else {
+        allDataPre = allDataPre[!duplicated(allDataPre[,genes]),]
+        
+    }
     allDataPre = allDataPre[!allDataPre[,genes]=='',]
     return(allDataPre)
 }
