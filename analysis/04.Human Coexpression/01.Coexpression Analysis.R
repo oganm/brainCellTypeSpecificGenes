@@ -6,6 +6,9 @@ library(data.table)
 library(stringr)
 source('R/mostVariable.R')
 source('R/puristOut.R')
+source('R/coexpBoxViol.R')
+source('R/coexpNetwork.R')
+
 sourceGithub(oganm, toSource, homologene)
 homoloGeneTarget = 'data/homologene.tsv'
 
@@ -54,11 +57,10 @@ allGenes = lapply(allGenes,lapply,function(x){
 
 # handcrafting gene sets
 geneSets = list(all = allGenes[[1]][c('Astrocyte', 'Microglia','Oligo')],
+                #all = allGenes[[1]],
                 cortex = allGenes[['Cortex']],
                 substantiaNigra = allGenes$Midbrain,
                 cerebellum = allGenes$Cerebellum)
-
-
 
 
 for (i in 1:len(sets)){
@@ -84,4 +86,3 @@ coexpData = lapply(files,function(x){
 })
 
 coexpBoxViol(coexpData)
-
