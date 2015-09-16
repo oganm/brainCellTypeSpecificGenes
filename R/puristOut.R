@@ -63,5 +63,6 @@ puristOut = function(geneLoc, lilah = F){
         puristList[[i]] = trimElement(geneList[[i]], unlist(geneList[-i]))
     }
     names(puristList) = names(geneList)
+    puristList = lapply(puristList, as.character)
     return(puristList)
 }
