@@ -104,5 +104,4 @@ softFile = softFile[!is.na(softFile$pH)
 
 # shitloads of time and memory! 
 readHumanCel(softFile$GSM,paste0('data/GSE60862_Expression Matrices/','all'),humanDir='data/cel//GPL5175')
-humanExp = fread('data/GSE60862_expression')
 
