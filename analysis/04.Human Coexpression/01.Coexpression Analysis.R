@@ -1,6 +1,4 @@
-library(corpcor)
-library(igraph)
-library(RBGL)
+
 library(ogbox)
 library(data.table)
 library(stringr)
