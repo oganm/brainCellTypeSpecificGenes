@@ -1,5 +1,6 @@
 
 library(ogbox)
+library(geneSynonym)
 
 sourceGithub(OganM, toSource, homologene)
 homoloGeneTarget = 'data/homologene.tsv'
@@ -18,7 +19,8 @@ fullEstimate = function(exprData, # expression data
                         groupRotations=F, # output rotations of individiual genes
                         outlierSampleRemove=T, # if T outliers in each sample is removed
                         geneTransform = function(x){mouse2human(x)$humanGene}, # function to use when translating gene names
-                        controlBased = NA, # name of the control group as seen in groups if the operation is controll based
+                        controlBased = NULL, # name of the control group as seen in groups if the operation is controll based
+                        comparisons = 'all',
                         pAdjMethod = p.adjust.methods, # method for multiple testing correction. defaults to holm
                         PC = 1 # which PC to use. mostly you want this to be 1
 ){
@@ -29,7 +31,7 @@ fullEstimate = function(exprData, # expression data
                                  groups=groups,
                                  controlBased= controlBased,
                                  tableOut = paste0(outDir,'/',names(genes),' rotTable.tsv'),
-                                 indivGenePlot= paste0(outDir,'/',names(genes),' indivExp','.svg'),
+                                 indivGenePlot= paste0(outDir,'/',names(genes),' indivExp','.png'),
                                  seekConsensus = seekConsensus,
                                  PC = PC)
     estimates$estimates = trimNAs(estimates$estimates)
@@ -45,9 +47,10 @@ fullEstimate = function(exprData, # expression data
     }
 
     plotEstimates(estimates$estimates,estimates$groups,
-                  paste0(outDir,
-                         names(estimates$estimates),'.svg'),
-                  pAdjMethod = pAdjMethod)
+                  paste0(outDir,'/',
+                         names(estimates$estimates),'.png'),
+                  pAdjMethod = pAdjMethod,
+                  comparisons = comparisons)
 
 }
 
@@ -167,7 +170,7 @@ cellTypeEstimate = function(exprData,
         groupRotations = groupRotations(exprData, genes,
                                         geneColName, groups, outDir=NA,
                                         geneTransform = geneTransform,
-                                        synonymTaxID = NA)
+                                        synonymTaxID = synonymTaxID)
     }
 
     estimateOut = vector(mode = 'list', length = len(genes))
@@ -284,7 +287,7 @@ cellTypeEstimate = function(exprData,
 # calculates rotations based on each group
 groupRotations = function(exprData, genes,geneColName, groups, outDir,
                           geneTransform = function(x){mouse2human(x)$humanGene},
-                          synonymTaxID = NA)
+                          synonymTaxID = NULL)
 {
     if (typeof(genes)!='list'){
         genes = list(genes)
