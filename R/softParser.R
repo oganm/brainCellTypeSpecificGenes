@@ -42,7 +42,7 @@ softParser = function(softFile, # file to read
         strsplit(x[1],' = ')[[1]][2]
     })
     
-    sampleData = sapply(sampleData,function(x){
+    sampleData = lapply(sampleData,function(x){
         x[grepl('^\\!',x)]
     })
     
