@@ -63,7 +63,7 @@ fullEstimate = function(exprData, # expression data
 plotEstimates = function(estimates,groups,plotNames, sigTest =  wilcox.test,
                          pAdjMethod = p.adjust.methods,
                          correction = c('columnar', 'all'),
-                         comparisons = 'all',
+                         comparisons = 'all', # if p value correction should happen in per plot or for the entire list of ps
                          sigTreshold = 0.05){
     toCreate = unique(dirname(plotNames))
     sapply(toCreate,dir.create,showWarnings = F,recursive=T)
@@ -75,28 +75,32 @@ plotEstimates = function(estimates,groups,plotNames, sigTest =  wilcox.test,
         estimates = list(estimates)
     }
 
-    if (comparisons == 'all'){
-        comparisons = combn(groupNames,2)
+    if (!is.null(comparisons)){
+        if (comparisons == 'all'){
+            comparisons = combn(groupNames,2)
+        }
     }
-
     # create p value lists for correction
-    pList = matrix(data = NA, ncol = ncol(comparisons), nrow = len(estimates))
-    for (i in 1:len(estimates)) {
-
-        for (j in 1:ncol(comparisons)){
-            pList[i, j] = sigTest(estimates[[i]][groups[[i]] %in% comparisons[1,j]],
-                                  estimates[[i]][groups[[i]] %in% comparisons[2,j]])$p.value
+    if (!is.null(comparisons)){
+        pList = matrix(data = NA, ncol = ncol(comparisons), nrow = len(estimates))
+        for (i in 1:len(estimates)) {
+            
+            for (j in 1:ncol(comparisons)){
+                pList[i, j] = sigTest(estimates[[i]][groups[[i]] %in% comparisons[1,j]],
+                                      estimates[[i]][groups[[i]] %in% comparisons[2,j]])$p.value
+            }
         }
-    }
-    # p value adjustment
-    if (correction[1] == 'columnar'){
-        for (i in 1:ncol(pList)){
-            pList[,i] = p.adjust(pList[,i], pAdjMethod)
+        
+        # p value adjustment
+        if (correction[1] == 'columnar'){
+            for (i in 1:ncol(pList)){
+                pList[,i] = p.adjust(pList[,i], pAdjMethod)
+            }
         }
-    }
-
-    if (correction[1]=='all'){
-        pList = matrix(p.adjust(cbind(pList,pList)),nrow = len(estimates))
+        
+        if (correction[1]=='all'){
+            pList = matrix(p.adjust(cbind(pList,pList)),nrow = len(estimates))
+        }
     }
 
 
@@ -107,9 +111,11 @@ plotEstimates = function(estimates,groups,plotNames, sigTest =  wilcox.test,
         windowDown = min((frame$PC1)) - 0.5
 
         # prepare significance text
-        sigText = apply(comparisons, 2, paste0, collapse = '/')
-
-        sigText = paste0(sigText,': ',sprintf('%.5f',pList[i,]),collapse = '\n')
+        if (!is.null(comparisons)){ 
+            sigText = apply(comparisons, 2, paste0, collapse = '/')
+            
+            sigText = paste0(sigText,': ',sprintf('%.5f',pList[i,]),collapse = '\n')
+        }
 
         lePlot = ggplot(frame,aes(x=group, y = PC1)) +
             geom_violin( color="#C4C4C4", fill="#C4C4C4") +
@@ -119,14 +125,16 @@ plotEstimates = function(estimates,groups,plotNames, sigTest =  wilcox.test,
             scale_y_continuous(limits=c(windowDown, windowUp),
                                name="Relative estimate of cell type amounts") +
             theme_bw() +
-            theme(axis.text.x  = element_text(size=25),
+            theme(axis.text.x  = element_text(size=25, angle=90),
                   axis.title.y = element_text(vjust=0.5, size=25),
                   axis.title.x = element_text(vjust=0.5, size=0) ,
                   title = element_text(vjust=0.5, size=25),
-                  axis.text.y = element_text(size = 13)) +
-            annotate('text', x = 0.1 , y = windowUp ,
-                     label = sigText ,
-                     hjust = 0, vjust=1, size = 4.5)
+                  axis.text.y = element_text(size = 13))
+        if (!is.null(comparisons)){
+         lePlot = lePlot +    annotate('text', x = 0.1 , y = windowUp ,
+                                       label = sigText ,
+                                       hjust = 0, vjust=1, size = 4.5)
+        }
         (lePlot)
         ggsave(plotNames[i],width=8,height=8)
 
@@ -148,13 +156,13 @@ cellTypeEstimate = function(exprData,
                             #rotTreshold = NA,
                             #validateRotation=NA,
                             outlierSampleRemove = T,
-                            synonymTaxID = NULL, # do you want to add synonyms? no you don't don't touch this
+                            synonymTaxID = NULL, # do you want to add synonyms? no you don't. don't touch this
                             geneTransform = function(x){mouse2human(x)$humanGene},
-                            groups = NA,
+                            groups, # a vector designating the groups. must be defined.
                             controlBased = NULL,
                             tableOut = NULL,
                             indivGenePlot = NULL, # where should it plot individual gene expression plots.
-                            seekConsensus = F,
+                            seekConsensus = F, # seeking concensus accross groups
                             plotType = c('groupBased','cummulative'), # group based plot requires groups
                             PC = 1){
     if (!is.null(indivGenePlot[1])){
@@ -222,7 +230,7 @@ cellTypeEstimate = function(exprData,
             p = ggplot(indivGenes,aes(y = expression, x = group )) +
                 facet_wrap('gene') +
                 geom_boxplot(fill = 'lightblue') +
-                theme(axis.text.x  = element_text( size=20),
+                theme(axis.text.x  = element_text( size=20,angle=90),
                       axis.title.y = element_text(vjust=0.5, size=20),
                       axis.title.x = element_text(vjust=0.5, size=0) ,
                       title = element_text(vjust=0.5, size=20))+
