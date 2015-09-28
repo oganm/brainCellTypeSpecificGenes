@@ -12,7 +12,6 @@ Akna
 Arhgap22
 Arhgap25
 Arhgap30
-AW112010
 BC028528
 BC035044
 C3ar1
@@ -26,7 +25,6 @@ Cd68
 Ceacam1|Ceacam2
 Ceacam2|Ceacam1
 Cfh
-Cflar
 Chil3
 Chil3|Chil4
 Clec4a2|Clec4b1
@@ -99,7 +97,6 @@ Junb
 Lacc1
 Lgals9
 Ltc4s
-Luc7l2
 Ly6e
 Ly96
 Lyn
@@ -134,13 +131,13 @@ Pon3
 Ppcdc
 Ppp1r15a
 Pros1
+Ptbp3
 Ptgs1
 Rab32
 Rasal3
 Rel
 Rin2
 Rin3
-Rnaset2a|Rnaset2b
 Rrbp1
 Sash3
 Sgpl1
@@ -160,10 +157,12 @@ Srsf7
 Stab1
 Stard9
 Stat6
+Syngr2
 Tagap|Tagap1
 Tbxas1
 Tceb3
 Tfpi
+Tgfb1
 Tlr1
 Tlr13
 Tmem71

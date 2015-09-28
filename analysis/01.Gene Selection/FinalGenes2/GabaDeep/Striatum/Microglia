@@ -17,10 +17,10 @@ Ankrd44
 Arhgap22
 Arhgap25
 Arhgap30
-AW112010
 BC028528
 BC035044
 Bcl2a1a|Bcl2a1d|Bcl2a1b
+Btg2
 C1qc
 C3ar1
 Cables1
@@ -34,7 +34,6 @@ Cd68
 Ceacam1|Ceacam2
 Ceacam2|Ceacam1
 Cfh
-Cflar
 Chil3
 Chil3|Chil4
 Clec4a2|Clec4b1
@@ -44,7 +43,6 @@ Cmklr1
 Col6a3
 Copa
 Coro1a
-Creg1
 Crybb1
 Ctsh
 Ctss
@@ -129,7 +127,6 @@ Lacc1
 Lcp1
 Lgals9
 Ltc4s
-Luc7l2
 Ly6e
 Ly86
 Ly96
@@ -185,7 +182,6 @@ Rin3
 Sash3
 Siglecf
 Sipa1
-Skap2
 Slc11a1
 Slc4a7
 Slc7a7
@@ -223,7 +219,6 @@ Trim12a
 Trim30d|Trim30e-ps1|Trim30a
 Trim34a
 Trpv2
-Ttc28
 Tuba1c|Gm6682
 Tyrobp
 Ugt1a2|Ugt1a10|Ugt1a6b|Ugt1a7c|Ugt1a1|Ugt1a9|Ugt1a6a|Ugt1a5
@@ -233,4 +228,3 @@ Was
 Wasf2
 Wsb1
 Xlr4b|Xlr4a|Xlr4c
-Zfx|Zfa-ps

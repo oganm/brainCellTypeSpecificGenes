@@ -23,7 +23,7 @@ geneSelect(paste0(dataDir,'/meltedDesign.tsv'),
            regionNames,
            cores=cores#,
            #debug='Forebrain_GabaDeep'
-           )
+)
 
 geneSelect(paste0(dataDir,'/meltedDesign2.tsv'),
            paste0(dataDir,'/','finalExp2.csv'),
@@ -32,7 +32,7 @@ geneSelect(paste0(dataDir,'/meltedDesign2.tsv'),
            regionNames,
            cores=cores#,
            #debug = 'Cerebellum_PyramidalDeep'
-           )
+)
 
 
 #rotation gene selection
@@ -98,4 +98,6 @@ for (n in 1:len(allGenes)){
 
 microglialException('analysis/01.Gene Selection/FinalGenes1/',cores=cores)
 microglialException('analysis/01.Gene Selection/FinalGenes2/',cores=cores)
+
+system('rm -rf "analysis/01.Gene Selection/FinalGenes/"')
 file.rename('analysis/01.Gene Selection/FinalGenes1/','analysis/01.Gene Selection/FinalGenes/')
