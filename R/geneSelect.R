@@ -6,7 +6,7 @@ require(reshape2)
 require(cluster)
 source('R/regionize.R')
 
-geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rotate = NA,cores = 4,debug=NULL){
+geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rotate = NULL,cores = 4,debug=NULL, sampleName = 'sampleName', replicates = 'originalIndex'){
 
     # so that I wont fry my laptop
     if (detectCores()<cores){ 
@@ -83,14 +83,14 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
     list[geneData, exprData] = sepExpr(allDataPre)
 
     
-    if (!all(colnames(exprData) %in% make.names(design$sampleName))){
-        if(is.na(rotate)){
+    if (!all(colnames(exprData) %in% make.names(design[[sampleName]]))){
+        if(is.null(rotate)){
             print('Unless you are rotating samples, something has gone terribly wrong!')
         }
-        exprData = exprData[,colnames(exprData) %in% design$sampleName]
+        exprData = exprData[,colnames(exprData) %in% design[[sampleName]]]
     }
     
-    design = design[match(colnames(exprData),make.names(design$sampleName),),]
+    design = design[match(colnames(exprData),make.names(design[[sampleName]]),),]
     
     exprData = t(exprData)
     noReg = F
@@ -176,7 +176,7 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
         }
         
         # if rotation is checked, get a subset of the samples. result is rounded. so too low numbers can make it irrelevant
-        if (!is.na(rotate)){
+        if (!is.null(rotate)){
             realGroups2 = lapply(realGroups,function(x){sort(sample(x,len(x)-round(len(x)*rotate)))})
             removed = unlist(realGroups)[!unlist(realGroups) %in% unlist(realGroups2)]
             realGroups = realGroups2
@@ -190,21 +190,21 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
         # replicateMeans ------
         # inefficient if not rotating but if you are not rotating you are only doing it once anyway
         
-        indexes = unique(tempDesign$originalIndex)
+        indexes = unique(tempDesign[[replicates]])
         repMeanExpr = sapply(1:len(indexes), function(j){
             tryCatch({
-                apply(tempExpr[tempDesign$originalIndex == indexes[j],], 2,mean)},
+                apply(tempExpr[tempDesign[[replicates]] == indexes[j],], 2,mean)},
                 error= function(e){
-                    if (is.na(rotate)){
+                    if (is.null(rotate)){
                         print('unless you are rotating its not nice that you have single replicate groups')
                         print('you must be ashamed!')
                         print(j)
                     }
-                    tempExpr[tempDesign$originalIndex == indexes[j],]
+                    tempExpr[tempDesign[[replicates]] == indexes[j],]
                 })
         })
         repMeanExpr = t(repMeanExpr)
-        repMeanDesign = tempDesign[match(indexes,tempDesign$originalIndex),]
+        repMeanDesign = tempDesign[match(indexes,tempDesign[[replicates]]),]
         
         # since realGroups is storing the original locations required for
         # silhouette store the new locations to be used with repMeanExpr here
@@ -229,7 +229,7 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
         # creation of output directories ----
         dir.create(paste0(outLoc ,'/Marker/' , names(nameGroups)[i] , '/'), showWarnings = F,recursive = T)
         dir.create(paste0(outLoc , '/Relax/' , names(nameGroups)[i] , '/'), showWarnings = F, recursive =T)
-        if (!is.na(rotate)){
+        if (!is.null(rotate)){
             write.table(removed,
                         file = paste0(outLoc,'/Relax/',names(nameGroups)[i] , '/removed'),
                         col.names=F)
