@@ -1,7 +1,4 @@
-require(RCurl)
-eval( expr = parse( text = getURL(
-    "https://raw.githubusercontent.com/oganm/toSource/master/ogbox.R",
-    ssl.verifypeer=FALSE) ))
+library(ogbox)
 
 sexFind = function(input, output, expr){
 
