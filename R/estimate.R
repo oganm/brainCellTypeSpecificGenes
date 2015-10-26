@@ -22,7 +22,8 @@ fullEstimate = function(exprData, # expression data
                         controlBased = NULL, # name of the control group as seen in groups if the operation is controll based
                         comparisons = 'all',
                         pAdjMethod = p.adjust.methods, # method for multiple testing correction. defaults to holm
-                        PC = 1 # which PC to use. mostly you want this to be 1
+                        PC = 1,
+                        estimateFile = NULL# which PC to use. mostly you want this to be 1
 ){
     estimates = cellTypeEstimate(exprData=exprData,
                                  genes=genes,
@@ -37,6 +38,13 @@ fullEstimate = function(exprData, # expression data
     estimates$estimates = trimNAs(estimates$estimates)
     estimates$groups = trimNAs(estimates$groups)
 
+    
+    if (!is.null(estimateFile) & !outlierSampleRemove){
+        estimateFrame = cbind(as.data.frame(estimates$estimates), estimates$groups[[1]])
+        names(estimateFrame)[ncol(estimateFrame)] = 'groups'
+        write.table(estimateFrame, file=estimateFile , quote=F,sep='\t')
+    }
+    
     if (groupRotations){
         groupRotations(exprData,
                        geneTransform=geneTransform,
@@ -216,20 +224,23 @@ cellTypeEstimate = function(exprData,
 
 
         if (!is.null(indivGenePlot[1])){
-            indivGenes = data.frame(melt(relevantExpr)[,2],rownames(relevantExpr))
-            names(indivGenes) = c('expression', 'gene')
+            tempExp = relevantExpr
+            tempExp$gene = rownames(tempExp)
+            indivGenes = melt(tempExp)
+            names(indivGenes) = c( 'gene','GSM','expression')
+            
+            indivGenes = indivGenes %>% mutate(group = groups[match(GSM, colnames(tempExp))])
 
             switch(plotType[1],
                    groupBased = {
-                       indivGenes =  data.frame(indivGenes,group = groups)
                    },
                    cummulative = {
-                       indivGenes =  data.frame(indivGenes,group = '')
+                       indivGenes$group =''
                    })
 
             p = ggplot(indivGenes,aes(y = expression, x = group )) +
                 facet_wrap('gene') +
-                geom_boxplot(fill = 'lightblue') +
+                geom_boxplot(fill = 'lightblue')+ geom_point() +
                 theme(axis.text.x  = element_text( size=20,angle=90),
                       axis.title.y = element_text(vjust=0.5, size=20),
                       axis.title.x = element_text(vjust=0.5, size=0) ,
