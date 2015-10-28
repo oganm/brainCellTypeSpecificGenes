@@ -20,8 +20,18 @@ puristOut = function(geneLoc, lilah = F){
                 NULL
             })
     })
+    names(fileContents) = filenames
+    
+    # empty first file protection
+    lengths = sapply(fileContents,len)
+    destinedToBeFirst = which.max(lengths>0)
+    
+    theFirst = fileContents[1]
+    fileContents[1] = fileContents[destinedToBeFirst]
+    fileContents[destinedToBeFirst] = theFirst
+    
     geneList = vector(mode = 'list', length = length(fileContents))
-    names(geneList) = filenames
+    names(geneList) = names(fileContents)
     
     if (ncol(fileContents[[1]])==3 & lilah == F){
         # this if for a combination of fold change and silhouette coefficient
@@ -69,5 +79,11 @@ puristOut = function(geneLoc, lilah = F){
     }
     names(puristList) = names(geneList)
     puristList = lapply(puristList, as.character)
+    
+    theFirst = fileContents[1]
+    fileContents[1] = fileContents[destinedToBeFirst]
+    fileContents[destinedToBeFirst] = theFirst
+    
+    
     return(puristList)
 }
