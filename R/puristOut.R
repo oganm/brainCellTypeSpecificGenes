@@ -54,7 +54,12 @@ puristOut = function(geneLoc, lilah = F){
         for (i in 1:length(fileContents)){
         geneList[[i]] = as.character(fileContents[[i]]$V1[as.numeric(as.character(fileContents[[i]]$V2))>0.95])
         }
-    }else {
+    } else if(ncol(fileContents[[1]])==4){
+        # this is for 10 fold changed markers. none of the other collumns matter. just get the genes dammit
+        for (i in 1:length(fileContents)){
+            geneList[[i]] = as.character(fileContents[[i]]$V1)
+        }
+    } else {
         stop('What kind of gibberish is this')
     }
 
