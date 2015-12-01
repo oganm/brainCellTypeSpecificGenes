@@ -1,4 +1,4 @@
-GSE60862dataPrep = function(){
+GSE60862dataPrep = function(filter = 'median'){
     
     library(ogbox)
     library(data.table)
@@ -14,7 +14,11 @@ GSE60862dataPrep = function(){
     
     # use median expression as elimination treshold
     list[geneData,exprData] = sepExpr(humanExp)
-    medExp = median(unlist(exprData))
+    if (filter == 'median'){
+        medExp = median(unlist(exprData))
+    } else {
+        medExp = filter
+    }
     humanExp = mostVariable(humanExp,medExp) 
     list[geneData,exprData] = sepExpr(humanExp)
     
