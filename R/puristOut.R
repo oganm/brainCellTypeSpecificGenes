@@ -87,3 +87,12 @@ puristOut = function(geneLoc, lilah = F){
     
     return(puristList)
 }
+
+# lapply(c('Eno2','Mog'), findGene, list)
+findGene = function(gene,list){
+    out = lapply(list, function(x){
+        findInList(gene,x)
+    })
+    matches = out[lapply(out,len)>0]
+    matches = sapply(1:len(matches), function(i){
+        paste0(names(matches[i]),'_', names(list[[names(matches[i])]][matches[
