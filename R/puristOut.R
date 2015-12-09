@@ -95,4 +95,9 @@ findGene = function(gene,list){
     })
     matches = out[lapply(out,len)>0]
     matches = sapply(1:len(matches), function(i){
-        paste0(names(matches[i]),'_', names(list[[names(matches[i])]][matches[
+        paste0(names(matches[i]),'_', names(list[[names(matches[i])]][matches[[i]]]))
+    })  
+    return(matches)
+}
+
+
