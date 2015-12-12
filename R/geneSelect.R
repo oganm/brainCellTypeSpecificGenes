@@ -5,9 +5,7 @@ require(parallel)
 require(reshape2)
 require(cluster)
 source('R/regionize.R')
-
 geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rotate = NULL,cores = 4,debug=NULL, sampleName = 'sampleName', replicates = 'originalIndex'){
-
     # so that I wont fry my laptop
     if (detectCores()<cores){ 
         cores = detectCores()
@@ -15,7 +13,6 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
         print(paste('set core no to',cores))
     }
     registerDoMC(cores)
-
     
     #gene selector, outputs selected genes and their fold changes
     foldChange = function (group1, group2, f = 10){
@@ -75,13 +72,11 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
         silo = silhouette(cluster,dist(data))
         return(mean(silo[,3]))    
     }
-
     # data prep. you transpose exprData -----
     design = read.design(designLoc)
     
     allDataPre = read.csv(exprLoc, header = T)
     list[geneData, exprData] = sepExpr(allDataPre)
-
     
     if (!all(colnames(exprData) %in% make.names(design[[sampleName]]))){
         if(is.null(rotate)){
@@ -100,7 +95,6 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
         noReg = T
     }
     
-
     # deal with region stuff ----
 #     regions =
 #         trimNAs(
@@ -164,10 +158,9 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
     
     # the main loop around groups ------
     
-    foreach (i = 1:len(nameGroups)) %dopar% {
-    # for (i in 1:len(nameGroups)){
+    # foreach (i = 1:len(nameGroups)) %dopar% {
+     for (i in 1:len(nameGroups)){
          #debub point for groups
-
         typeNames = trimNAs(unique(nameGroups[[i]]))
         realGroups = vector(mode = 'list', length = length(typeNames))
         names(realGroups) = typeNames
@@ -177,11 +170,16 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
         
         # if rotation is checked, get a subset of the samples. result is rounded. so too low numbers can make it irrelevant
         if (!is.null(rotate)){
-            realGroups2 = lapply(realGroups,function(x){sort(sample(x,len(x)-round(len(x)*rotate)))})
+            realGroups2 = lapply(realGroups,function(x){
+              if(len(x)==1){
+                warning('Samples with single replicates. Bad brenna! bad!')
+                return(x)
+              }
+              sort(sample(x,len(x)-round(len(x)*rotate)))
+              })
             removed = unlist(realGroups)[!unlist(realGroups) %in% unlist(realGroups2)]
             realGroups = realGroups2
         }
-
         tempExpr = exprData[unlist(realGroups),]
         tempDesign = design[unlist(realGroups),]
  
@@ -211,7 +209,6 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
         # use the old typeNames since that cannot change
         realGroupsRepMean =  vector(mode = 'list', length = length(typeNames))
         print(names(nameGroups)[i])
-
         for (j in 1:length(typeNames)){
             realGroupsRepMean[[j]] = which(repMeanDesign[,groupNamesEn[i]] == typeNames[j])
         }
@@ -284,5 +281,4 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
         }# end of for around groupAverages
         
     } # end of foreach loop around groups
-
 } # end of function
