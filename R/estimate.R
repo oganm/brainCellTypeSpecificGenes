@@ -1,9 +1,7 @@
 
 library(ogbox)
 library(geneSynonym)
-
-sourceGithub(OganM, toSource, homologene)
-homoloGeneTarget = 'data/homologene.tsv'
+library(homologene)
 
 require(reshape2)
 require(ggplot2)
