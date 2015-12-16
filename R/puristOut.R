@@ -11,7 +11,7 @@ allPuristOut = function(genesLoc,lilah=F,regex='*'){
 }
 
 
-puristOut = function(geneLoc, lilah = F){
+puristOut = function(geneLoc, rotationThresh = 0.95,silhouette = 0.5,foldChange = 10,lilah = F){
     filenames = list.files(geneLoc,include.dirs = FALSE)
     fileContents = lapply(paste0(geneLoc,'/', filenames), function(x){
         tryCatch(
@@ -41,8 +41,8 @@ puristOut = function(geneLoc, lilah = F){
                                                           fileContents[[x]][,1]
                                                           })),]
                 
-            geneList[[i]] = as.character(tempContent$V1[as.numeric(as.character(tempContent$V3))>0.5
-                                                              & as.numeric(as.character(tempContent$V2))>log(10,base=2)])
+            geneList[[i]] = as.character(tempContent$V1[as.numeric(as.character(tempContent$V3))>silhouette
+                                                              & as.numeric(as.character(tempContent$V2))>log(foldChange,base=2)])
         }
     }else if (ncol(fileContents[[1]])==3 & lilah == T){
         # this if for lilah's selection method
@@ -62,7 +62,7 @@ puristOut = function(geneLoc, lilah = F){
     } else if(ncol(fileContents[[1]])==2){
         # this is for selection of percentages from confidence output
         for (i in 1:length(fileContents)){
-        geneList[[i]] = as.character(fileContents[[i]]$V1[as.numeric(as.character(fileContents[[i]]$V2))>0.95])
+        geneList[[i]] = as.character(fileContents[[i]]$V1[as.numeric(as.character(fileContents[[i]]$V2))>rotationThresh])
         }
     } else if(ncol(fileContents[[1]])==4){
         # this is for 10 fold changed markers. none of the other collumns matter. just get the genes dammit
