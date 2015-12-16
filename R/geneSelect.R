@@ -5,7 +5,18 @@ require(parallel)
 require(reshape2)
 require(cluster)
 source('R/regionize.R')
-geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rotate = NULL,cores = 4,debug=NULL, sampleName = 'sampleName', replicates = 'originalIndex'){
+geneSelect = function(designLoc,
+                      exprLoc,
+                      outLoc,
+                      groupNames,
+                      regionNames=NULL,
+                      rotate = NULL,
+                      cores = 4,
+                      debug=NULL, 
+                      sampleName = 'sampleName',
+                      replicates = 'originalIndex',
+                      foldChangeThresh = 10,
+                      minimumExpression = 8){
     # so that I wont fry my laptop
     if (detectCores()<cores){ 
         cores = detectCores()
@@ -34,7 +45,7 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
         g26 = groupAverage2 < 6
         # this is a late addition preventing anything that is below 8 from being
         # selected. ends up removing the the differentially underexpressed stuff as well
-        gMinTresh = groupAverage1 > 8
+        gMinTresh = groupAverage1 > minimumExpression
         
         
         tempGroupAv2 = vector(length = length(groupAverage2))
@@ -247,7 +258,7 @@ geneSelect = function(designLoc,exprLoc,outLoc,groupNames, regionNames=NULL, rot
             })  
   
             fMarker = data.frame(geneData$Gene.Symbol[isMarker], groupAverages[j,isMarker], apply(groupAverages[-j,isMarker,drop=F],2,max), apply(groupAverages[-j,isMarker,drop=F],2,min))
-            fChange = foldChange(groupAverages[j, ], groupAverages[-j,,drop=F] )
+            fChange = foldChange(groupAverages[j, ], groupAverages[-j,,drop=F] ,foldChangeThresh)
             fChangePrint = data.frame(geneNames = geneData$Gene.Symbol[fChange$index], geneFoldChange= fChange$foldChange )
             fChangePrint = fChangePrint[order(fChangePrint$geneFoldChange, decreasing=T) ,]
             
