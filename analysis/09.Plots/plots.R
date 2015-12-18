@@ -7,9 +7,57 @@ library(ogbox)
 library(scales)
 library(gplots)
 library(stringr)
+library(magrittr)
 source('R/cellColors.R')
 source('R/puristOut.R')
 source('R/heatmap.3.R')
+source('R/regionize.R')
+order = read.design('data/meltedDesign.tsv') %>%
+    arrange(MajorType,Neurotransmitter1,PyramidalDeep) %>% 
+    filter(!is.na(PyramidalDeep)) %>% .$PyramidalDeep %>% unique
+
+# expression plot of selected genes by region -----------------
+list[geneDat, exp] = read.exp('data/finalExp.csv')  %>% sepExpr
+design = read.design('data/meltedDesign.tsv')
+
+dpylrFriendly = cbind(design, t(exp))
+
+dpylrFriendly %<>% arrange(MajorType,Neurotransmitter1,PyramidalDeep) %>% filter(!is.na(PyramidalDeep))
+regionSamples = regionize(design = dpylrFriendly,regionNames = 'Region',groupNames = 'PyramidalDeep')
+
+regionSamples = c(regionSamples,list(All = dpylrFriendly$PyramidalDeep))
+names(regionSamples) = gsub('_.*','',names(regionSamples))
+list[design,exp] = dpylrFriendly %>% sepExpr
+
+colors = cellColors()
+
+dir.create('analysis/09.Plots/GenePlots')
+
+for (i in 1:len(regionSamples)){
+    
+    genes = puristOut(paste0('analysis/01.Gene Selection/FinalGenes/PyramidalDeep/',names(regionSamples)[i]))
+    genes = genes[regionSamples[[i]] %>% unique %>% trimNAs]
+    genes %<>% lapply(function(x){
+        x[!grepl('\\|',x)]
+    })
+    
+    relExp = exp[!is.na(regionSamples[[i]]),match(unlist(genes), geneDat$Gene.Symbol)]
+    relGene = geneDat[match(unlist(genes), geneDat$Gene.Symbol),]
+    relExp = apply(relExp,2,scale01)
+    
+    
+    geneCellTypes = str_extract(names(unlist(genes)) , regexMerge(cellTypes))
+    
+    heatCols = toColor(design$PyramidalDeep[!is.na(regionSamples[[i]])], colors)
+    geneCols = toColor(geneCellTypes, colors)
+    
+    png(paste0('analysis/09.Plots/GenePlots/',names(regionSamples)[i]),height=1000,width=1000)
+    heatmap.2(t(relExp),Rowv=F,Colv=F,trace='none',col=viridis(20),ColSideColors=heatCols$cols,RowSideColors=geneCols$cols,labRow='',labCol='', main = names(regionSamples[[i]]))
+    legend(title= 'Cell Types','bottomleft' ,legend= names(heatCols$palette), fill = heatCols$palette )
+    dev.off()
+}
+
+
 
 # 01. expression plot of the selected genes -------------
 list[geneDat, exp] = read.exp('data/finalExp.csv')  %>% sepExpr
@@ -23,12 +71,25 @@ dpylrFriendly$JustPyra = factor(dpylrFriendly$PyramidalDeep,
 
 
 dpylrFriendly = dpylrFriendly %>% filter(!is.na(JustPyra)) %>% arrange(JustPyra)
-
+.
 list[design,exp] = dpylrFriendly %>% sepExpr
 cellTypes = unique(design$PyramidalDeep)
 
 # get all genes for a given cell type
 genes  = allPuristOut('analysis/01.Gene Selection/FinalGenes/PyramidalDeep/')
+
+files = list.files('analysis/01.Gene Selection//RotSel/Marker/',recursive=T,full.names=T)
+files = files[grepl('PyramidalDeep',files)]
+genes = lapply(files,function(x){
+    try({read.table(x)$V1})
+})
+
+names(genes) = basename(files)
+
+lapply(unique(names(genes)), function(x){
+    
+})
+
 
 colors = cellColors()
               
@@ -60,7 +121,12 @@ png('analysis/09.Plots/markerGenes.png',height=1000,width=1000)
 heatmap.2(t(relExp),Rowv=F,Colv=F,trace='none',col=viridis(20),ColSideColors=heatCols$cols,RowSideColors=geneCols$cols,labRow='',labCol='')
 legend(title= 'Cell Types','bottomleft' ,legend= names(heatCols$palette), fill = heatCols$palette )
 dev.off()
-w# 02.figure mouse single cell ----------
+
+
+
+
+
+# 02.figure mouse single cell ----------
 
 simuProbs = read.table('analysis/02.Mouse Single Cell/Output/NoTresholdNoDub0.3333/simuProbs', header= TRUE)
 pVals = read.table("analysis/02.Mouse Single Cell/Output/NoTresholdNoDub0.3333/realProbs", header=TRUE)
@@ -92,8 +158,21 @@ sigMarks = signifMarker(pVals$ps)
 
 plots = lapply(1:len(existanceMatri), function(i){
     
-    GeneOrder = existanceMatri[[i]][existanceMatri[[i]][2:ncol(existanceMatri[[i]])] %>% dist %>% hclust %>% as.dendrogram %>% labels,1]
-    cellOrder = existanceMatri[[i]][2:ncol(existanceMatri[[i]])] %>% t %>% dist %>% hclust %>% as.dendrogram %>% labels
+    set.seed(1)
+    GeneOrder = existanceMatri[[i]][existanceMatri[[i]][2:ncol(existanceMatri[[i]])] %>% 
+                                        dist %>%
+                                        hclust %>% 
+                                        as.dendrogram %>% 
+                                        reorder(rowMeans(existanceMatri[[i]][2:ncol(existanceMatri[[i]])])) %>%
+                                        labels,1]
+    set.seed(1)
+    cellOrder = existanceMatri[[i]][2:ncol(existanceMatri[[i]])] %>%
+        t %>% 
+        dist %>% 
+        hclust %>%
+        as.dendrogram %>%
+        reorder(colMeans(existanceMatri[[i]][2:ncol(existanceMatri[[i]])])) %>%
+        labels
     
     frame = existanceMatri[[i]] %>% (reshape2::melt)
     frame$V1 = factor(frame$V1, levels = GeneOrder)
@@ -118,7 +197,7 @@ plots = lapply(1:len(existanceMatri), function(i){
 })
 
 
-plot = plot_grid(plotlist = plots, ncol=5)
+plot = plot_grid(plotlist = plots, ncol=5, labels = letters[1:10])
 save_plot('analysis//09.Plots/singleMouseCellPlot.png',plot, base_height=10,base_aspect_ratio=2)
 
 
@@ -147,15 +226,27 @@ sigMarks = signifMarker(pVals$ps)
 
 
 plots = lapply(1:len(existanceMatri), function(i){
+    set.seed(1)
+    GeneOrder = existanceMatri[[i]][existanceMatri[[i]][2:ncol(existanceMatri[[i]])] %>% 
+                                        dist %>%
+                                        hclust %>% 
+                                        as.dendrogram %>% 
+                                        reorder(rowMeans(existanceMatri[[i]][2:ncol(existanceMatri[[i]])])) %>%
+                                        labels,1]
+    set.seed(1)
+    cellOrder = existanceMatri[[i]][2:ncol(existanceMatri[[i]])] %>%
+        t %>% 
+        dist %>% 
+        hclust %>%
+        as.dendrogram %>%
+        reorder(colMeans(existanceMatri[[i]][2:ncol(existanceMatri[[i]])])) %>%
+        labels
     
-    GeneOrder = existanceMatri[[i]][existanceMatri[[i]][2:ncol(existanceMatri[[i]])] %>% dist %>% hclust %>% as.dendrogram %>% labels,1]
-    cellOrder = existanceMatri[[i]][2:ncol(existanceMatri[[i]])] %>% t %>% dist %>% hclust %>% as.dendrogram %>% labels
-    if(names(existanceMatri)[i] %in% c('Astrocyte', 'Oligo', 'Microglia')){
-       dendro =  existanceMatri[[i]][2:ncol(existanceMatri[[i]])] %>% dist %>% hclust %>% as.dendrogram 
-       apply(existanceMatri[[i]][labels(dendro[[1]]),2:ncol(existanceMatri[[i]])],1,sum)
-       apply(existanceMatri[[i]][labels(dendro[[2]]),2:ncol(existanceMatri[[i]])],1,sum)
-       
-    }
+#      if(names(existanceMatri)[i] %in% c('Astrocyte', 'Oligo', 'Microglia')){
+#         dendro =  existanceMatri[[i]][2:ncol(existanceMatri[[i]])] %>% dist %>% hclust %>% as.dendrogram 
+#         apply(existanceMatri[[i]][labels(dendro[[1]]),2:ncol(existanceMatri[[i]])],1,sum)
+#         apply(existanceMatri[[i]][labels(dendro[[2]]),2:ncol(existanceMatri[[i]])],1,sum)
+#      }
     
     frame = existanceMatri[[i]] %>% (reshape2::melt)
     frame$V1 = factor(frame$V1, levels = GeneOrder)
@@ -179,8 +270,41 @@ plots = lapply(1:len(existanceMatri), function(i){
 })
 
 
-plot = plot_grid(plotlist = plots, ncol=5)
+plot = plot_grid(plotlist = plots, ncol=5, labels = letters[11:20])
 save_plot('analysis//09.Plots/singleHumanCellPlot.png',plot, base_height=10,base_aspect_ratio=2)
+
+# get crappy genes for glial cells
+set.seed(1)
+crappyGenesAstro = existanceMatri$Astrocyte[,2:ncol(existanceMatri$Astrocyte)] %>% 
+    as.matrix %>%
+    heatmap.2(trace='none') %$% 
+    rowDendrogram[[2]][[2]][[1]] %>% labels %>% existanceMatri$Astrocyte[.,1]
+set.seed(1)
+crappyGenesOligo = existanceMatri$Oligo[,2:ncol(existanceMatri$Oligo)] %>% 
+    as.matrix %>%
+    heatmap.2(trace='none') %$% 
+    rowDendrogram[[2]][[2]][[1]] %>% labels %>% existanceMatri$Oligo[.,1]
+set.seed(1)
+crappyGenesMicroglia = existanceMatri$Microglia[,2:ncol(existanceMatri$Microglia)] %>% 
+    as.matrix %>%
+    heatmap.2(trace='none') %$% 
+    rowDendrogram[[2]][[2]][[2]][[2]][[2]][[2]][[2]][[2]][[2]][[2]][[2]][[2]][[2]][[2]][[2]] %>% labels %>% existanceMatri$Microglia[.,1]
+
+crappyGenes = list(Astrocyte = crappyGenesAstro,
+                   Oligo = crappyGenesOligo,
+                   Microglia = crappyGenesMicroglia)
+
+# human coexpression crappy genes -------
+dir.create('analysis//09.Plots/crappyGenesHumanCoexp')
+for (i in 1:len(crappyGenes)){
+    coexpression = read.csv(paste0('analysis/04.Human Coexpression/intraGroup/singleData/cortex/', names(crappyGenes)[i]))
+    coexpression = coexpression[,2:ncol(coexpression)]
+    isCrappy = colnames(coexpression) %in% crappyGenes[[i]]
+    colors = toColor(isCrappy,c('FALSE'='white','TRUE' = muted('red')))$cols
+    png(paste0('analysis//09.Plots/crappyGenesHumanCoexp/', names(crappyGenes)[i],'.png'),width=800,height=800)
+    heatmap.2(coexpression %>% as.matrix,trace = 'none',col=viridis(20), dendrogram='column', ColSideColors=colors, main = names(crappyGenes)[i],labRow='')
+    dev.off()
+}
 
 # 04.human coexpression ------
 
@@ -259,14 +383,14 @@ save_plot('analysis//09.Plots/humanCoexpressionPlot.png',plot, base_height=20,ba
 
 
 # 05. Estimation plots --------
+# brain region
 estims = read.table('analysis/05.Brain Estimations/estimations/cortex_white/estimations', header=T,sep='\t')
 estims[1:(ncol(estims)-1)] = apply(estims[1:(ncol(estims)-1)],2,scale01)
 frame =melt(estims)
 names(frame) = c('brainRegions','cellType','estimation')
-frame$cellType = factor(frame$cellType, levels = c('Astrocyte', 'Oligo', 'Microglia',
-                         as.char(unique(frame$cellType)[!unique(frame$cellType) %in% c('Astrocyte', 'Oligo', 'Microglia')])))
+frame$cellType = factor(frame$cellType, levels =order) %>% droplevels
 frame = frame %>% group_by(cellType)
-maxY = frame %>% summary(max())
+maxY = frame %>% summarise(max(estimation))
 ps= by(frame, frame$cellType, function(x){
     a1 = x %>% filter(brainRegions == 'frontal cortex') %>% select(estimation) %>% unlist
     a2 = x %>% filter(brainRegions == 'white matter') %>% select(estimation) %>% unlist
@@ -282,7 +406,194 @@ p  = frame %>%
     ggplot(aes(x=brainRegions, y = estimation)) + facet_wrap(~cellType) + 
     geom_violin( color="#C4C4C4", fill="#C4C4C4") +
     geom_boxplot(width=0.1,fill = 'lightblue') + 
+    # geom_point()+
     theme(axis.text.x = element_text(angle=45, hjust = 1),
           strip.text.x = element_text(size = 16)) +
-    geom_text(data=signifFrame , aes(x = x, y=y, label = markers))
+    geom_text(data=signifFrame , aes(x = x, y=y, label = markers),size=10) + 
+    coord_cartesian(ylim = c(-0.10, 1.10)) 
+
 ggsave(filename='analysis//09.Plots/cortex_WhiteMatterEstimations.png',p,width=11,height=10)
+
+# parkinsons
+estims = read.table('analysis/05.Brain Estimations/estimations/parkinsonMale/estimations', header=T,sep='\t')
+estims[1:(ncol(estims)-1)] = apply(estims[1:(ncol(estims)-1)],2,scale01)
+frame =melt(estims)
+names(frame) = c('parkinsons','cellType','estimation')
+frame$parkinsons[frame$parkinsons] = "Parkinson's"
+frame$parkinsons[frame$parkinsons=='FALSE'] ='Control'
+frame$cellType = factor(frame$cellType, levels = order) %>% droplevels
+maxY = frame %>% summarise(max(estimation))
+ps= by(frame, frame$cellType, function(x){
+    a1 = x %>% filter(parkinsons == 'Parkinson\'s') %>% select(estimation) %>% unlist
+    a2 = x %>% filter(parkinsons == 'Control') %>% select(estimation) %>% unlist
+    wilcox.test(a1,a2)$p.value
+})
+ps = p.adjust(ps)
+markers = signifMarker(ps)
+signifFrame = data.frame(markers, x= 1.5, y= 1,cellType = names(ps))
+
+p  = frame %>%
+    ggplot(aes(x=parkinsons, y = estimation)) + facet_wrap(~cellType) + 
+    geom_violin( color="#C4C4C4", fill="#C4C4C4") +
+    geom_boxplot(width=0.1,fill = 'lightblue') + 
+    geom_point()+
+    theme(axis.text.x = element_text(angle=45, hjust = 1),
+          strip.text.x = element_text(size = 16)) +
+    geom_text(data=signifFrame , aes(x = x, y=y, label = markers),size=10) + 
+    coord_cartesian(ylim = c(-0.10, 1.10)) 
+
+ggsave(filename='analysis//09.Plots/parkinsonEstimations.png',p,width=11,height=10)
+    
+frame %<>% filter(cellType == 'Dopaminergic')
+signifFrame %<>% filter(cellType == 'Dopaminergic')
+p  = frame %>%
+    ggplot(aes(x=parkinsons, y = estimation)) + facet_wrap(~cellType) + 
+    geom_violin( color="#C4C4C4", fill="#C4C4C4") +
+    geom_boxplot(width=0.1,fill = 'lightblue') + 
+    geom_point()+
+    theme(axis.text.x = element_text(angle=45, hjust = 1),
+          strip.text.x = element_text(size = 16)) +
+    geom_text(data=signifFrame , aes(x = x, y=y, label = markers),size=10) + 
+    coord_cartesian(ylim = c(-0.10, 1.10)) 
+ggsave(filename='analysis//09.Plots/parkinsonDopaminergicAlone.png',p,width=4,height=5)
+
+
+
+# 06. blood run plots-------------
+
+
+# blood marker gene plots lm22 ------
+markerPlot = function(expression,
+                      design, 
+                      geneList,
+                      cellTypeNaming,
+                      sampleNaming = 'sampleName',
+                      order = cellTypeNaming, 
+                      colors, 
+                      geneSymbol = 'Gene.Symbol',
+                      fileName, 
+                      main=NULL){
+    list[geneDat, exp] = expression  %>% sepExpr
+    exp = exp[match(design[,sampleNaming], colnames(exp))]
+    dpylrFriendly = cbind(design, t(exp))
+    dpylrFriendly %<>% arrange_(.dots = order) %>% filter_(!is.na(cellTypeNaming))
+    list[design,exp] = dpylrFriendly %>% sepExpr
+    genes %<>% lapply(function(x){
+        x[!grepl('\\|',x)]
+    })
+    relExp = exp[,match(unlist(genes), geneDat[,geneSymbol])]
+    relGene = geneDat[match(unlist(genes), geneDat[,geneSymbol]),]
+    relExp = apply(relExp,2,scale01)
+    
+    cellTypes = names(colors)
+    geneCellTypes = str_extract(names(unlist(genes)) , regexMerge(cellTypes,exact=TRUE))
+    
+    heatCols = toColor(design[,cellTypeNaming], colors)
+    geneCols = hede(geneCellTypes, colors)
+    
+    png(fileName,height=1000,width=1000)
+    heatmap.2(t(relExp),Rowv=F,Colv=F,trace='none',col=viridis(20),ColSideColors=heatCols$cols,RowSideColors=geneCols$cols,labRow='',labCol='', main = main)
+    legend(title= 'Cell Types','bottomleft' ,legend= names(heatCols$palette), fill = heatCols$palette )
+    dev.off()
+    
+}
+
+expr= read.exp('data/bloodCellType/finalBlood.csv') 
+design = read.design('analysis/06.Blood validation/BloodCells.tsv')
+genes = puristOut('analysis/06.Blood validation/humanGenes/rotSel/Relax/Abreviated.name/')
+colors = c('CD4 memory T cells-' = 'darkgreen',
+           'CD4 memory T cells+' = 'palegreen',
+           'CD4 naïve T cells' = 'chartreuse4',
+           'CD8 T cells' = 'blue4',
+           'DCs-' = 'coral2',
+           'DCs+' = 'coral4',
+           'Eos' = 'darkmagenta',
+           'M0-MΦs' = 'gold4',
+           'M1-MΦs' = 'gold',
+           'M2-MΦs' = 'goldenrod',
+           'MCs-' = 'mediumorchid1',
+           'MCs+' = 'mediumorchid4',
+           'Memory B cells' = 'lightsteelblue1',
+           'Monos' = 'powderblue',
+           'Naïve B cells' = 'lightsteelblue4',
+           'NK cells-' = 'red1',
+           'NK cells+' = 'red4',
+           'PCs' = 'violetred1',
+           'PMNs' = 'yellow',
+           'Tfh cells' = 'springgreen4',
+           'Tregs' = 'springgreen',
+           'γδ T cells' = 'tan1')
+markerPlot(expression = expr,
+           design = design,
+           geneList = genes,
+           cellTypeNaming = 'Abreviated.name',
+           colors = colors,
+           fileName = 'analysis/09.Plots/blood22plot',
+           main = 'lm22 Genes')
+
+
+# lm11------
+genes = puristOut('analysis/06.Blood validation/humanGenes/rotSel/Relax/Leuk11//')
+colors = c('B Cells' = 'lightsteelblue1',
+           'CD4' = 'darkgreen',
+           'CD8 T cells' = 'blue4',
+           'Dendritic' = 'coral4',
+           'Eos' = 'darkmagenta',
+           'GammaDeltaT' = 'tan1',
+           'Mast' = 'mediumorchid4',
+           'MonoMacro' = 'gold',
+           'Neutrophils' = 'yellow',
+           'NK' = 'red1',
+           'PCs' = 'violetred1')
+markerPlot(expression = expr,
+           design = design,
+           geneList = genes,
+           cellTypeNaming = 'Leuk11',
+           order = c('Leuk11', 'Abreviated.name'),
+           colors = colors,
+           fileName = 'analysis/09.Plots/blood11plot',
+           main = 'lm11 Genes')
+
+
+# misc plots ------------------------
+simuProbs = read.table('analysis/03.Human Single Cell/Output/NoTreshold0.3333/simuProbs', header= TRUE)
+pVals = read.table("analysis/03.Human Single Cell/Output/NoTreshold0.3333/realProbs", header=TRUE)
+
+allFiles = list.files('analysis/03.Human Single Cell/Output/NoTreshold0.3333/',full.names=TRUE)
+
+
+allFiles = allFiles[!grepl('(simuProbs)|(realProbs)', allFiles)]
+
+existanceMatri = lapply(allFiles, function(x){
+    read.table(x,skip=1)
+})
+names(existanceMatri) = basename(allFiles)
+
+
+existanceMatri = existanceMatri[c('Astrocyte', 'Oligo', 'Microglia',
+                                  names(existanceMatri)[!names(existanceMatri) %in% c('Astrocyte', 'Oligo', 'Microglia')])]
+
+
+astroDendro = existanceMatri[[1]][2:ncol(existanceMatri[[1]])] %>% dist %>% hclust %>% as.dendrogram
+
+existanceMatri[[1]][astroDendro[[2]] %>% labels,1]
+
+existanceMatri[[1]][astroDendro[[2]][[1]][[1]] %>% labels, 2:ncol(existanceMatri[[1]])] %>% as.matrix %>% heatmap.2(trace='none')
+
+geneNames = existanceMatri[[1]][astroDendro[[2]][[1]][[1]] %>% labels,1]
+
+astroGroupRots = 'analysis/05.Brain Estimations/estimations/cortex_white/Astrocyte groupRots' %>% 
+    read.table(header=T, sep='\t')
+astroGroupRots$Gene = rownames(astroGroupRots)
+
+astroGroupRots = astroGroupRots %>% arrange(frontal.cortex) %>% mutate(isBad =Gene %in% geneNames ) 
+
+
+astroGroupRots %>% 
+    ggplot(aes(y=frontal.cortex, x= 1, color = isBad)) + geom_point(size = 15,shape=95) +  scale_colour_manual(values = c(muted('blue'),'red')) + ylab('Gene rotation for PC1') +
+    theme(legend.position="none",
+          axis.title.y = element_text(size = 20))
+
+
+
+pal(toColor(astroGroupRots$Gene %in% geneNames,c(muted('blue'),muted('red')))$col)
