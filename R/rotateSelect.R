@@ -1,11 +1,11 @@
 library(ogbox)
 source('R/puristOut.R')
+library(foreach)
+library(doMC)
+library(parallel)
 
+rotateSelect = function(rotationOut,rotSelOut,cores=4, lilah=F, ...){
 
-rotateSelect = function(rotationOut,rotSelOut,cores=4, lilah=F){
-    require(foreach)
-    require(doMC)
-    require(parallel)
     # so that I wont fry my laptop
     if (detectCores()<cores){ 
         cores = detectCores()
@@ -37,7 +37,7 @@ rotateSelect = function(rotationOut,rotSelOut,cores=4, lilah=F){
 
         pureConfidence = vector(mode = 'list', length =len(files))
         for (j in dirFols){
-            pureSample = puristOut(paste0(j,'/',i), lilah)
+            pureSample = puristOut(paste0(j,'/',i), lilah, ...)
             pureConfidence = mapply(c,pureSample,pureConfidence)
         }
         confidence = lapply(pureConfidence,function(x){table(x)/len(dirFols)})
