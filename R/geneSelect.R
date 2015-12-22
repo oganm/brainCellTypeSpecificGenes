@@ -169,8 +169,8 @@ geneSelect = function(designLoc,
     
     # the main loop around groups ------
     
-    # foreach (i = 1:len(nameGroups)) %dopar% {
-     for (i in 1:len(nameGroups)){
+     foreach (i = 1:len(nameGroups)) %dopar% {
+    #for (i in 1:len(nameGroups)){
          #debub point for groups
         typeNames = trimNAs(unique(nameGroups[[i]]))
         realGroups = vector(mode = 'list', length = length(typeNames))
