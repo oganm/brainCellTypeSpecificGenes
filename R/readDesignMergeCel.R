@@ -124,8 +124,10 @@ meltDesign = function(desFile, normalize, celRegex, exprFile, outFile){
     }
 
     newDesign = data.frame(sampleName = header, originalIndex = indexes, design[indexes,])
+    
+    newDesign = newDesign[match(make.names(colnames(expres)),make.names(newDesign$sampleName)),]
     colnames(newDesign) = c('sampleName','originalIndex',names(design))
-    newDesign = newDesign[order(as.numeric(rownames(newDesign))),]
+   #  newDesign = newDesign[order(as.numeric(rownames(newDesign))),]
     write.table(newDesign, paste0(outFile), row.names=FALSE,sep = '\t', quote=F)
 
 }
