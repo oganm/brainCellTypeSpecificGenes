@@ -10,6 +10,8 @@ geneAnalysisPipeline = function(gene){
     
     dir.create(paste0('analysis//99.GeneAnalysisPipeline/',gene,'/developPlots'),recursive=T, showWarnings = F)
     
+    
+    
     for (i in files){
         orbitalDat = fread(i)
         orbitalDat = orbitalDat[!is.na(orbitalDat$Gene.Symbol),]
@@ -21,8 +23,8 @@ geneAnalysisPipeline = function(gene){
         relMeta = meta[match(cn(orbExp),rn(meta)),]
         relMeta = relMeta[!duplicated(relMeta$brain.code),]
         orbExp = orbExp[,cn(orbExp) %in% rn(relMeta), with=F]
-        orbExp = orbExp[,relMeta$Age_years<=20,with=F]
-        relMeta = relMeta[relMeta$Age_years<=20,]
+        orbExp = orbExp[,relMeta$Age_years<=10,with=F]
+        relMeta = relMeta[relMeta$Age_years<=10,]
         png(paste0('analysis//99.GeneAnalysisPipeline/',gene,'/developPlots/',regionNames$V2[regionNames$V1 %in% basename(i)],'.png'))
         plot(unlist(relMeta$Age_years),unlist(orbExp[orbGenes$Gene.Symbol %in% gene,]),
              main=regionNames$V2[regionNames$V1 %in% basename(i)],xlab='Age', 
@@ -228,6 +230,18 @@ geneAnalysisPipeline = function(gene){
     
     # large region dataset------
     
+    list[expr,meta] = GSE60862dataPrep()
+    
+    relExpr = expr[rownames(expr) %in% gene,] %>% unlist
+    
+    frame = data.frame(BrainReg = meta$brainRegion, log2Exp = relExpr)
+    
+    allExpress = sapply(unique(meta$brainRegion), function(x){
+        dat = expr[,meta$brainRegion %in% x] %>% unlist
+    })
+    allExpress = melt(allExpress)
+    names(allExpress) = c('log2Exp', 'BrainReg')
+    
     
     files = list.files('analysis//99.GeneAnalysisPipeline/HumanRegionExpr/',full.names=T)
     #files = files[grepl(regexMerge(c('frontal','hippocampus')), files)]
@@ -243,6 +257,24 @@ geneAnalysisPipeline = function(gene){
     })
     allExpress = melt(allExpress)
     names(allExpress) = c('log2Exp', 'BrainReg')
+    
+    p = ggplot(frame , aes(x= BrainReg, y= log2Exp))  + 
+        geom_boxplot(data=allExpress, color ='gray',aes(fill ='Expression of All Genes'),outlier.size=0, width= 0.3) +
+        geom_boxplot(aes(fill = gene), outlier.size=0) + 
+        geom_point(position='jitter') + scale_y_continuous(paste(gene,'expession')) + 
+        theme_bw() + theme(axis.text.x =  element_text(angle=90, vjust=0.5, size=16),
+                           axis.title.x = element_text(size=0),
+                           axis.title.y = element_text(size=17)) + 
+        ggtitle(paste0(gene, " GSE60862")) + 
+        scale_fill_manual(name="",values=cols)
+    ylim1 = boxplot.stats(allExpress$log2Exp)$stats[c(1, 5)]
+    ylim1[2] = ylim1[2]*1.05
+    ylim1[1] = ylim1[1]*0.95
+    
+    p= p + coord_cartesian(ylim = ylim1)
+    ggsave(paste0('analysis/99.GeneAnalysisPipeline/',gene,'/plain accross reg Large Dataset','.png'),plot=p,height=8,width=7)
+    
+    
     
     allExpress[,2] = basename(allExpress[,2])
     allExpress[allExpress[,2] %in% 'thalamus',2] = 'Thalamus'
@@ -325,5 +357,11 @@ geneAnalysisPipeline = function(gene){
     ggsave(paste0('analysis/99.GeneAnalysisPipeline/',gene,'/plain accross reg Large Dataset','.png'),plot=p,height=8,width=7)
     
     
+    # linnarson single cell
+    download.file(paste0(''))
     
+    
+    # humanRNA seq
+    expresso = read.exp('data/humanRNASeq.csv')
+                  
 }

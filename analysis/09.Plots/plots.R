@@ -4,6 +4,7 @@ library(ggplot2)
 library(reshape2)
 library(cowplot)
 library(ogbox)
+library(homologene)
 library(scales)
 library(gplots)
 library(stringr)
@@ -478,15 +479,21 @@ markerPlot = function(expression,
     dpylrFriendly = cbind(design, t(exp))
     dpylrFriendly %<>% arrange_(.dots = order) %>% filter_(!is.na(cellTypeNaming))
     list[design,exp] = dpylrFriendly %>% sepExpr
-    genes %<>% lapply(function(x){
+    geneList %<>% lapply(function(x){
         x[!grepl('\\|',x)]
     })
-    relExp = exp[,match(unlist(genes), geneDat[,geneSymbol])]
-    relGene = geneDat[match(unlist(genes), geneDat[,geneSymbol]),]
+    
+    genes = geneList
+    
+    relExp = exp[,match(unlist(genes), geneDat[,geneSymbol]) %>% trimNAs]
+    relGene = geneDat[match(unlist(genes), geneDat[,geneSymbol]) %>% trimNAs,]
     relExp = apply(relExp,2,scale01)
     
     cellTypes = names(colors)
-    geneCellTypes = str_extract(names(unlist(genes)) , regexMerge(cellTypes,exact=TRUE))
+    
+    genes = unlist(genes)[unlist(genes) %in% relGene[,geneSymbol]]
+    
+    geneCellTypes = str_extract(names(genes) , regexMerge(cellTypes,exact=TRUE))
     
     heatCols = toColor(design[,cellTypeNaming], colors)
     geneCols = hede(geneCellTypes, colors)
@@ -534,7 +541,7 @@ markerPlot(expression = expr,
 
 # lm11------
 genes = puristOut('analysis/06.Blood validation/humanGenes/rotSel/Relax/Leuk11//')
-colors = c('B Cells' = 'lightsteelblue1',
+colors = c('B Cell' = 'lightsteelblue1',
            'CD4' = 'darkgreen',
            'CD8 T cells' = 'blue4',
            'Dendritic' = 'coral4',
@@ -545,6 +552,16 @@ colors = c('B Cells' = 'lightsteelblue1',
            'Neutrophils' = 'yellow',
            'NK' = 'red1',
            'PCs' = 'violetred1')
+markerPlot(expression = expr,
+           design = design,
+           geneList = genes,
+           cellTypeNaming = 'Leuk11',
+           order = c('Leuk11', 'Abreviated.name'),
+           colors = colors,
+           fileName = 'analysis/09.Plots/blood11plot',
+           main = 'lm11 Genes')
+
+genes = puristOut('analysis/06.Blood validation/mouseGenes/Fold/Relax/lm11/') %>% lapply(function(x){mouse2human(x)$humanGene})
 markerPlot(expression = expr,
            design = design,
            geneList = genes,

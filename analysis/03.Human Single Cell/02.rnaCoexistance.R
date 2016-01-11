@@ -16,6 +16,9 @@ markerGenes = puristOut('analysis//01.Gene Selection//FinalGenes/PyramidalDeep/C
 
 markerGenes = sapply(markerGenes,function(x){ as.character(mouse2human(x)$humanGene)})
 
+# removal of genes from lilah's findings
+markerGenes$GabaPV = markerGenes$GabaPV[!markerGenes$GabaPV %in% 'LPL']
+markerGenes$GabaVIPReln = markerGenes$GabaVIPReln[!markerGenes$GabaVIPReln %in% 'HTR3A']
 
 # no treshold run ----------------
 print('beginning thresholding')
