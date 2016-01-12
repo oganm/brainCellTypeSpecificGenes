@@ -10,6 +10,7 @@ Outputs of other analysis steps can be found in their respective directories
 ### Dependencies
 * ogbox (see below)
 * geneSynonym (see below)
+* homologene (see below)
 * stringr
 * affy
 * oligo
@@ -34,13 +35,14 @@ Outputs of other analysis steps can be found in their respective directories
 
 ogbox is a general purpose package that is written for personal use. Hence it is not on CRAN. To get it, you need to install devtools if you don't have it already
 
-geneSynonym is a package to find gene synonyms. It also needs to be installed from my repositories.
+geneSynonym is a package to find gene synonyms and homologene finds gene homologues across species. They also need to be installed from github.
 
 ```
 install.packages('devtools')
 library(devtools)
 install_github('oganm/ogbox')
 install_github('oganm/geneSynonym')
+install_github('oganm/homologene')
 
 
 ```
