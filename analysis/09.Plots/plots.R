@@ -485,8 +485,10 @@ markerPlot = function(expression,
     
     genes = geneList
     
-    relExp = exp[,match(unlist(genes), geneDat[,geneSymbol]) %>% trimNAs]
-    relGene = geneDat[match(unlist(genes), geneDat[,geneSymbol]) %>% trimNAs,]
+    genes = genes[match(unique(design[,cellTypeNaming]) , names(genes))]
+    
+    relExp = exp[,match(unlist(genes), geneDat[,geneSymbol]) %>% trimNAs,drop=F]
+    relGene = geneDat[match(unlist(genes), geneDat[,geneSymbol]) %>% trimNAs,,drop=F]
     relExp = apply(relExp,2,scale01)
     
     cellTypes = names(colors)
@@ -496,7 +498,7 @@ markerPlot = function(expression,
     geneCellTypes = str_extract(names(genes) , regexMerge(cellTypes,exact=TRUE))
     
     heatCols = toColor(design[,cellTypeNaming], colors)
-    geneCols = hede(geneCellTypes, colors)
+    geneCols = toColor(geneCellTypes, colors)
     
     png(fileName,height=1000,width=1000)
     heatmap.2(t(relExp),Rowv=F,Colv=F,trace='none',col=viridis(20),ColSideColors=heatCols$cols,RowSideColors=geneCols$cols,labRow='',labCol='', main = main)
@@ -504,11 +506,23 @@ markerPlot = function(expression,
     dev.off()
     
 }
-
-expr= read.exp('data/bloodCellType/finalBlood.csv') 
+expr = read.exp('data/bloodCellType/finalBlood.csv') 
 design = read.design('analysis/06.Blood validation/BloodCells.tsv')
+
+list[geneData, exprData] = expr %>% sepExpr
+exprData = exprData[match(design$sampleName, colnames(exprData))]
+
+
+expr = read.exp('data/bloodCellType/mouseBlood/bloodExp.csv') 
+design = read.design('data/bloodCellType/mouseBlood/bloodDes.tsv')
+
+
+list[geneData, exprData] = expr %>% sepExpr
+exprData = exprData[match(design$GSM, colnames(exprData))]
+
+
 genes = puristOut('analysis/06.Blood validation/humanGenes/rotSel/Relax/Abreviated.name/')
-colors = c('CD4 memory T cells-' = 'darkgreen',
+color22 = c('CD4 memory T cells-' = 'darkgreen',
            'CD4 memory T cells+' = 'palegreen',
            'CD4 naïve T cells' = 'chartreuse4',
            'CD8 T cells' = 'blue4',
@@ -534,14 +548,14 @@ markerPlot(expression = expr,
            design = design,
            geneList = genes,
            cellTypeNaming = 'Abreviated.name',
-           colors = colors,
+           colors = colors22,
            fileName = 'analysis/09.Plots/blood22plot',
            main = 'lm22 Genes')
 
 
 # lm11------
 genes = puristOut('analysis/06.Blood validation/humanGenes/rotSel/Relax/Leuk11//')
-colors = c('B Cell' = 'lightsteelblue1',
+colors = c('B Cells' = 'lightsteelblue1',
            'CD4' = 'darkgreen',
            'CD8 T cells' = 'blue4',
            'Dendritic' = 'coral4',
@@ -561,16 +575,77 @@ markerPlot(expression = expr,
            fileName = 'analysis/09.Plots/blood11plot',
            main = 'lm11 Genes')
 
+# criss cross 
+dictionary22 = data.frame(mouse = c("B cell memory", "B cell naive", "DC activated", "DC resting", "Eosinophil", "Macrophage M0", "Macrophage M1",
+                                    "Macrophage M2", "Mast cell activated", "Mast cell resting", "Monoctye", "Neutrophil", "NK activated", "NK resting",
+                                    "Plasma cell", "T_CD4_activated", "T_CD4_memory", "T_CD4_naive", "T_CD8", "T cell gamma delta", "T cells follicular helper", "Treg"),
+                          human = c('Memory B cells', 'Naïve B cells', 'DCs+', 'DCs-', "Eos", "M0-MΦs", 'M1-MΦs', 'M2-MΦs', 'MCs+',
+                                    'MCs-', "Monos", 'PMNs', 'NK cells+', 'NK cells-', "PCs", "CD4 memory T cells+", 'CD4 memory T cells-',
+                                    "CD4 naïve T cells", 'CD8 T cells', 'γδ T cells', 'Tfh cells', 'Tregs'),stringsAsFactors = F)
+dictionary11 = data.frame(mouse = c("B Cell", "CD4", "CD8", "Dendritic", "Eosinophil", "Macrophage", "Mast cell", "Neutrophil", "NK", "Plasma cell", "T cell gamma delta"),
+                          human = c("B Cells","CD4", 'CD8 T cells' , 'Dendritic', 'Eos', "MonoMacro", 'Mast', 'Neutrophils', 'NK', 'PCs', 'GammaDeltaT'),stringsAsFactors = F)
+
 genes = puristOut('analysis/06.Blood validation/mouseGenes/Fold/Relax/lm11/') %>% lapply(function(x){mouse2human(x)$humanGene})
+
+names(genes) = dictionary11$human[match(names(genes),dictionary11$mouse)]
+
 markerPlot(expression = expr,
            design = design,
            geneList = genes,
            cellTypeNaming = 'Leuk11',
            order = c('Leuk11', 'Abreviated.name'),
            colors = colors,
-           fileName = 'analysis/09.Plots/blood11plot',
-           main = 'lm11 Genes')
+           fileName = 'analysis/09.Plots/blood11MouseGeneInHumanCells',
+           main = 'lm11 Genes from mouse on human cells')
 
+
+# human genes on mouse expression for lm22
+hede = read.design('/home/brenna/Bloodtypes/design_select_complete.csv')
+mouseDes = read.design('data/bloodCellType/mouseBlood/bloodDes.tsv')
+
+design = hede[1:4]
+design %<>% apply(2,function(x){
+    gsubMult(patterns=c('"'), replacements = c(''),x )
+})
+
+mouseDes = mouseDes[match(design[,'X.GSM.'],mouseDes$GSM),]
+
+expr = hede[5:ncol(hede)] %>% apply(1,function(x){ gsubMult(patterns=c('"',' '), replacements = c('',''),x ) %>% as.numeric})
+rowGenes = gsubMult(c('X\\.','\\.$'),c('',''), colnames(hede[5:ncol(hede)]))
+
+expr = expr[,!is.na(mouseDes$lm22)]
+mouseDes = mouseDes[!is.na(mouseDes$lm22),]
+
+expr = cbind(as.data.frame(rowGenes) ,as.data.frame(expr) )
+colnames(expr) = c('Gene.Symbol', mouseDes$GSM)
+
+genes = puristOut('analysis/06.Blood validation/humanGenes/rotSel/Relax/Abreviated.name/') %>% lapply(function(x){human2mouse(x)$mouseGene})
+
+
+mouseDes$lm22 = mouseDes$lm22 %>% sapply(function(x){dictionary22$human[dictionary22$mouse %in% x]})
+
+markerPlot(expression = expr,
+           design = mouseDes,
+           geneList = genes,
+           sampleNaming = 'GSM',
+           cellTypeNaming = 'lm22',
+           order ='lm22',
+           colors = color22,
+           fileName = 'analysis/09.Plots/blood22humanGeneInMouseCells',
+           main = 'lm22 Genes from human on mouse cells')
+
+genes  = puristOut('/home/brenna/Bloodtypes/FinalGenes/lm22/All/')
+names(genes) = dictionary22$human[match(names(genes),dictionary22$mouse)]
+
+markerPlot(expression = expr,
+           design = mouseDes,
+           geneList = genes,
+           sampleNaming = 'GSM',
+           cellTypeNaming = 'lm22',
+           order ='lm22',
+           colors = color22,
+           fileName = 'analysis/09.Plots/blood22mouseGenesOnMouse',
+           main = 'lm22 Genes from mouse on mouse cells')
 
 # misc plots ------------------------
 simuProbs = read.table('analysis/03.Human Single Cell/Output/NoTreshold0.3333/simuProbs', header= TRUE)
