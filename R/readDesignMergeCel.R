@@ -6,10 +6,9 @@
 library(stringr)
 require(affy)
 require(compare)
-
+library(ogbox)
 
 readMouseCel = function(GSMs,mouseDir='cel',file=NA){
-    sourceGithub(oganm,toSource,gemmaAnnotate)
     sourceGithub(oganm,toSource,mergeChips)
 
     allCells = affy::list.celfiles(mouseDir, recursive = T)
