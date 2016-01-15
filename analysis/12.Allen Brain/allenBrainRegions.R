@@ -83,7 +83,7 @@ genes = puristOut('analysis/01.Gene Selection/FinalGenes/PyramidalDeep/All//') %
 genes = genes[sapply(genes, len)>2]
 
 
-regionAnalysis(flatBrains, design, genes)
+regionAnalysis(flatBrains, design, genes,'analysis/12.Allen Brain/all')
 
 
 # just cortex ======
@@ -100,74 +100,3 @@ regionAnalysis(flatBrainsSub, designSub, genes,'analysis/12.Allen Brain/cortex')
 
 
 
-med = flatBrainsSub %>% memoMatrix %>% memoMedian
-# med = 5.065599
-
-expression = cbind(probes$gene_symbol, flatBrainsSub)
-
-expression  = mostVariable(expression,'probes$gene_symbol',
-                           treshold=med)
-
-colnames(expression)[1] = 'Gene.Symbol'
-
-
-genes = puristOut('analysis/01.Gene Selection/FinalGenes/PyramidalDeep/Cortex/') %>% 
-    lapply(function(x){mouse2human(x)$humanGene})
-genes = genes[sapply(genes, len)>2]
-
-
-
-estimates = cellTypeEstimate(exprData = expression, 
-                             genes= genes,
-                             geneColName = 'Gene.Symbol',
-                             outlierSampleRemove = F,
-                             synonymTaxID = NULL,
-                             geneTransform = NULL, 
-                             groups = NA,
-                             controlBased = NULL, 
-                             tableOut = NULL,
-                             indivGenePlot = NULL,
-                             seekConsensus = F,
-                             plotType = NULL)
-
-
-estimData  = cbind(design[c('structure_id', 'structure_acronym', 'structure_name', 'donor')],
-                   (estimates$estimates %>% as.data.frame %>% apply(2,scale01)))
-
-estimData %<>% arrange(structure_id,donor)
-
-list[design, estimates] = sepExpr(estimData)
-
-estimates %<>% apply(2,scale01) %>% round(digits=14)
-
- colors = as.matrix(cbind(toColor(design$structure_id)$cols, toColor(design$donor)$cols))
-# 
-# heatmap.3(as.matrix(estimates), trace='none',Rowv=F,Colv=F, col= viridis(10),RowSideColors=t(colors),
-#           rowsep=(design$structure_id %>% duplicated %>% not %>% which)-1,
-#           sepwidth = c(0.1,0.1),sepcolor = 'white')
-# 
-
-
- estimData %<>% arrange(donor,structure_id)
- 
- list[design, estimates] = sepExpr(estimData)
- 
- estimates %<>% apply(2,scale01) %>% round(digits=14)
- 
- colors = as.matrix(cbind(toColor(design$structure_id)$cols, toColor(design$donor)$cols))
- 
- heatmap.3(as.matrix(estimates), trace='none',Rowv=F,Colv=F, col= viridis(10),RowSideColors=t(colors))
-
-
-frame = estimData %>% melt(id.vars = c('structure_id', 'structure_acronym', 'structure_name', 'donor'),
-                   value.name = 'estimate', variable.name = 'cellType')
-
-frame$donor = as.factor(frame$donor)
-frame$structure_id = as.factor(frame$structure_id)
-
-ggplot(frame, aes(x = structure_acronym, y = estimate, color = donor)) + facet_wrap(~cellType) + geom_boxplot() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
-hede = function(x){sepExpr(x)}
-
-estimData %>% group_by(donor) %>% do(sepExpr(.)[[2]])

@@ -131,3 +131,7 @@ GSM437382,GSM437383,GSM437384	Neuron	NA	Dopaminergic	Dopaminergic	Monoamine	Dopa
 GSM437391,GSM437392,GSM437393	Neuron	NA	Dopaminergic	Dopaminergic	Monoamine	Dopaminergic		Dopaminergic	Dopaminergic	T	T	A10Dopaminergic	A10 Dopaminergic Neurons	Midbrain	ventral midbrain tagmentum		Adult	LCM			GPL1261	Phani et al. 2015	20462502	T			
 GSM1698217,GSM1698218,GSM1698219	Neuron	NA	NA	NA	NA	NA	NA	NA	Pyramidal	T	T	Ntf3 pyramidal	Ntf3 pyramidal	Cortex		56-70	63	TRAP			GPL1261	Shrestha et al. 2015	26371510	T	shreejoy wanted them		
 GSM1698225,GSM1698226,GSM1698227	Neuron	NA	NA	NA	NA	NA	NA	NA	Pyramidal	T	T	Ntsr1 pyramidal	Ntsr1 pyramidal	Cortex		56-70	63	TRAP			GPL1261	Shrestha et al. 2015	26371510	T	shreejoy wanted them		
+GSM1698228,GSM16982289,GSM1698230	Neuron	NA	NA	NA	NA	NA	NA	NA	Pyramidal	T	T	Dlx1 pyramidal	Dlx1 pyramidal	Cortex		56-70	63	TRAP			GPL1261	Shrestha et al. 2015	26371510	T	shreejoy wanted them		
+GSM1698231,GSM1698232,GSM1698233	Neuron	NA	NA	NA	NA	NA	NA	NA	Gabaergic	T	T	Nek7 Gabaergic	Nek7 Gabaergic	Cortex		56-70	63	TRAP			GPL1261	Shrestha et al. 2015	26371510	T	shreejoy wanted them		
+GSM1698237,GSM1698238,GSM1698239	Glia	NA	NA	NA	NA	NA	NA	NA	Oligo	T	T	Olig2 oligo	Olig2 oligo	Cortex		56-70	63	TRAP			GPL1261	Shrestha et al. 2015	26371510	T	shreejoy wanted them		
+GSM1698234,GSM1698235,GSM1698236	Glia	NA	NA	NA	NA	NA	NA	NA	Astrocyte	T	T	Aldh1l1 astrocyte	Aldh1l1 astrocyte	Cortex		56-70	63	TRAP			GPL1261	Shrestha et al. 2015	26371510	T	shreejoy wanted them		

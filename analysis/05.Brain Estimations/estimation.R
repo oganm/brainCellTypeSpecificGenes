@@ -10,8 +10,7 @@ library(dplyr)
 # for human regions ------
 
 source('R/GSE60862dataPrep.R')
-sourceGithub(oganm, toSource, homologene)
-homoloGeneTarget = 'data/homologene.tsv'
+library(homologene)
 
 list[exprData,softFile] = GSE60862dataPrep()
 

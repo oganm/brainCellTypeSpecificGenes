@@ -8,8 +8,7 @@ source('R/coexpBoxViol.R')
 source('R/coexpNetwork.R')
 
 
-sourceGithub(oganm, toSource, homologene)
-homoloGeneTarget = 'data/homologene.tsv'
+library(homologene)
 
 source('R/GSE60862dataPrep.R')
 list[exprData,softFile] = GSE60862dataPrep()

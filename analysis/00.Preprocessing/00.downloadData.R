@@ -18,12 +18,6 @@ getGemmaAnnotGoogle('GPL5175','data/GemmaAnnots/GPL5175',annotType='noParents')
 getGemmaAnnotGoogle('GPL6884','data/GemmaAnnots/GPL6884',annotType='noParents')
 
 
-# download homology information ----------
-# used internally in homogene functions. I know its bad design but...
-sourceGithub(OganM,toSource,homologene)
-homoloGeneTarget = 'data/homogene.tsv'
-setUpHomologene()
-
 
 # mouse rna seq data download 02 ------
 download.file(url= 'http://linnarssonlab.org/blobs/cortex/expression_mRNA_17-Aug-2014.txt', destfile='data/mouseRNASeq_Zeisel 2015.txt')

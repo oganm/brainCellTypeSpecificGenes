@@ -1,5 +1,6 @@
 # Preprocessing of the data. The output files of this directory are also present in the data folder.
 library(ogbox)
+library(praise)
 source('R/readDesignMergeCel.R')
 source('R/quantileNormalize.R')
 source('R/mostVariable.R')
@@ -35,18 +36,17 @@ if (skipNorm == F){
     readDesignMergeCel(desFile, normalize, celRegex, celDir, 
                        paste0(outFolder, 'rmaExp.csv'),
                        paste0(outFolder,'meltedDesign.tsv'))
-    
     readDesignMergeCel(desFile, normalize2, celRegex, celDir,
                        paste0(outFolder, 'rmaExp2.csv'),
                        paste0(outFolder,'meltedDesign2.tsv'))
-    
+    praise("${EXCLAMATION}! ${Adverb} ${created}")
     
     quantileNorm(paste0(outFolder,'/rmaExp.csv'),
                  paste0(outFolder,'/','qnormExp.csv'))
     quantileNorm(paste0(outFolder,'/rmaExp2.csv'),
                  paste0(outFolder,'/',"qnormExp2.csv"))
     # system(paste0('gunzip ',outFolder,'/',qnormExp))
-    
+    praise("${EXCLAMATION}! ${Adverb} ${created}")
     mostVariableCT(paste0(outFolder,'/','qnormExp.csv'),
                    paste0(outFolder,'/','finalExp.csv'),
                    selectionNaming = 'GabaDeep',
@@ -56,12 +56,12 @@ if (skipNorm == F){
                    paste0(outFolder,'/','finalExp2.csv'),
                    selectionNaming = 'GabaDeep',
                    design=paste0(outFolder,'/meltedDesign2.tsv'))
-    
+    praise("${EXCLAMATION}! ${Adverb} ${created}")
     system(paste0('gzip -f ',outFolder,'/','qnormExp.csv'))
     system(paste0('gzip -f ',outFolder,'/rmaExp.csv'))
     system(paste0('gzip -f ',outFolder,'/','qnormExp2.csv'))
     system(paste0('gzip -f ',outFolder,'/','rmaExp2.csv'))
-    
+    praise("${EXCLAMATION}! ${Adverb} ${created}")
     #     system(paste0('gunzip -f ',outFolder,'/',qnormExp,'.gz'))
     #     system(paste0('gunzip -f ',outFolder,'/rmaExp.csv.gz'))
     #     system(paste0('gunzip -f ',outFolder,'/','qnormExp2.csv.gz'))
@@ -72,7 +72,7 @@ if (skipNorm == T){
     source('R/readDesignMergeCel.R')
     meltDesign(desFile, normalize, celRegex, paste0(outFolder,'/','finalExp.csv'), paste0(outFolder,'/meltedDesign.tsv'))
     meltDesign(desFile, normalize2, celRegex, paste0(outFolder,'/','finalExp2.csv'), paste0(outFolder,'/meltedDesign2.tsv'))
-    
+    praise("${EXCLAMATION}! ${Adverb} ${created}")
 }
 
 
@@ -83,5 +83,4 @@ sexFind(paste0(outFolder,'/meltedDesign.tsv'),
 sexFind(paste0(outFolder,'/meltedDesign2.tsv'),
         paste0(outFolder,'/meltedDesign2.tsv'),
         paste0(outFolder,'/','finalExp2.csv'))
-
-
+praise("${EXCLAMATION}! ${Adverb} ${created}")

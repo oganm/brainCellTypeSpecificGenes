@@ -1,9 +1,8 @@
 library(gplots)
 library(ogbox)
+library(homologene)
 source('R/puristOut.R')
 source('R/rnaCoexist.R')
-sourceGithub(OganM,toSource,homologene)
-homoloGeneTarget = 'data/homologene.tsv'
 
 rnaExp = read.table('data/humanRNASeq.csv', sep= ',', comment.char= "",stringsAsFactors=F, row.names=1, header=T)
 rnaExp = rnaExp[1:(nrow(rnaExp)-3),]
