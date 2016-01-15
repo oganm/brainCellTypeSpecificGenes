@@ -231,9 +231,6 @@ sapply(hede$estimates, function(x){
 
 
 # female male substantia nigra in big dataset -------------
-source('R/GSE60862dataPrep.R')
-sourceGithub(oganm, toSource, homologene)
-homoloGeneTarget = 'data/homologene.tsv'
 
 list[exprData,softFile] = GSE60862dataPrep()
 
