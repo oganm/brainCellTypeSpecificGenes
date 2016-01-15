@@ -12,7 +12,15 @@ readMouseCel = function(GSMs,mouseDir='cel',file=NA){
     sourceGithub(oganm,toSource,mergeChips)
 
     allCells = affy::list.celfiles(mouseDir, recursive = T)
-    files = sapply(GSMs,function(x){grep(paste0(x,'[.](C|c)(E|e)(L|l)$'),allCells,value=T)})
+    files = sapply(paste0('\\Q',GSMs,'\\E'),function(x){grep(paste0(x,'[.](C|c)(E|e)(L|l)'),allCells,value=T)})
+    
+    # notice if files are missing. send out a warning
+    if (files %>% sapply(len)  %>% is_greater_than(0) %>% not %>%  any){
+        stop('some cel files are missing: ',
+                paste((files %>% sapply(len)  %>% is_greater_than(0) %>% not %>% which %>% names),collapse=', '))
+    }
+    
+    
     platforms = unique(dirname(unlist(files)))
     affies =  lapply( rep("AffyBatch", len(platforms)), new )
     
