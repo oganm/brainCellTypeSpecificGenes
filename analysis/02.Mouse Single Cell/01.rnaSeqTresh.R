@@ -4,7 +4,7 @@ source('R/rnaSeqTresh.R')
 
 # load rna seq data--------------
 
-rnaSeq = read.table('data/mouseRNASeq_Zeisel 2015.txt', sep= '\t', comment.char= "",stringsAsFactors=F)
+rnaSeq = read.table('data/linnarsonSingleCell/mouseRNASeq_Zeisel 2015.txt', sep= '\t', comment.char= "",stringsAsFactors=F)
 rnaMeta = rnaSeq[1:10,3:ncol(rnaSeq)]
 rnaMeta = as.data.frame(t(rnaMeta))
 colnames(rnaMeta) = rnaSeq[1:10,2]

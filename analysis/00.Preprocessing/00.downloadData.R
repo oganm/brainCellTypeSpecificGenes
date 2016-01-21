@@ -20,9 +20,10 @@ getGemmaAnnotGoogle('GPL6884','data/GemmaAnnots/GPL6884',annotType='noParents')
 
 
 # mouse rna seq data download 02 ------
-download.file(url= 'http://linnarssonlab.org/blobs/cortex/expression_mRNA_17-Aug-2014.txt', destfile='data/mouseRNASeq_Zeisel 2015.txt')
+download.file(url= 'http://linnarssonlab.org/blobs/cortex/expression_mRNA_17-Aug-2014.txt', 
+              destfile='data/linnarsonSingleCell/mouseRNASeq_Zeisel 2015.txt')
 
-# human rna seq data download 03-----
+# human rna seq data download from linnarson 03-----
 gsms = gsmFind('GSE67835')
 dir.create('data/humanRNASeq')
 
@@ -372,3 +373,12 @@ system('unzip -n data/allenBrain/H0351.1015.zip -d data/allenBrain/H0351.1015')
 
 dir.create('data/allenBrain/H0351.1016')
 system('unzip -n data/allenBrain/H0351.1016.zip -d data/allenBrain/H0351.1016')
+
+
+# allen institute single cell data 
+download.file('ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE71nnn/GSE71585/suppl/GSE71585_RefSeq_RPKM.csv.gz',
+              'data/allenBrainSingleCells/GSE71585_RefSeq_RPKM.csv.gz')
+system('gunzip data/allenBrainSingleCells/GSE71585_RefSeq_RPKM.csv.gz')
+
+download.file('http://www.nature.com/neuro/journal/vaop/ncurrent/extref/nn.4216-S8.xlsx',
+              'data/allenBrainSingleCells/markerGenes.xlsx')
