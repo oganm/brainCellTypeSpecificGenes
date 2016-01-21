@@ -32,6 +32,8 @@ Outputs of other analysis steps can be found in their respective directories
 * sva
 * gplots
 * mixtools
+* XLConnect
+
 
 ogbox is a general purpose package that is written for personal use. Hence it is not on CRAN. To get it, you need to install devtools if you don't have it already
 
