@@ -20,8 +20,8 @@ fullEstimate = function(exprData, # expression data
                         controlBased = NULL, # name of the control group as seen in groups if the operation is controll based
                         comparisons = 'all',
                         pAdjMethod = p.adjust.methods, # method for multiple testing correction. defaults to holm
-                        PC = 1,
-                        estimateFile = NULL# which PC to use. mostly you want this to be 1
+                        PC = 1, # which PC to use. mostly you want this to be 1
+                        estimateFile = NULL
 ){
     estimates = cellTypeEstimate(exprData=exprData,
                                  genes=genes,
