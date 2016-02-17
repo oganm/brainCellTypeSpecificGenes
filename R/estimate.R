@@ -32,7 +32,8 @@ fullEstimate = function(exprData, # expression data
                                  tableOut = paste0(outDir,'/',names(genes),' rotTable.tsv'),
                                  indivGenePlot= paste0(outDir,'/',names(genes),' indivExp','.png'),
                                  seekConsensus = seekConsensus,
-                                 PC = PC)
+                                 PC = PC,
+                                 geneTransform = geneTransform)
     estimates$estimates = trimNAs(estimates$estimates)
     estimates$groups = trimNAs(estimates$groups)
 
