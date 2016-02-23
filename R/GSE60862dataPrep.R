@@ -5,8 +5,7 @@ GSE60862dataPrep = function(filter = 'median'){
     library(stringr)
     library(sva)
     source('R/mostVariable.R')
-    source('R/puristOut.R')
-    
+
     
     humanExp = fread('data/GSE60862_expression')
     humanExp = humanExp[!is.na(humanExp$Gene.Symbol),]
