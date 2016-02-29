@@ -14,16 +14,29 @@ microglialException = function(restDir=NULL, genelist = NULL ,updateList = F, co
     }
     registerDoMC(cores)
     # genes effected by old age and LPS stimulation
-    effectedGenes = unlist(goadDifGenes(ids=c(22,23),p=0.05,foldChange='2'))
+    effectedGenes = unlist(goadDifGenes(ids=c(22,23),p=0.05,foldChange='ALL'))
     effectedGenes = effectedGenes[!duplicated(effectedGenes)]
-        
+       
+    activationGenes = unlist(goadDifGenes(ids=c(23),p=0.05,foldChange='UP'))
+    activationGenes = activationGenes[!duplicated(activationGenes)]
+    
+    deactivationGenes = unlist(goadDifGenes(ids=c(23),p=0.05,foldChange='DOWN'))
+    deactivationGenes = deactivationGenes[!duplicated(deactivationGenes)]
+    p.adjust
+    
     if (!is.null(restDir)){
         fileNames = list.files(restDir, recursive =T )
         fileNames = fileNames[grepl('Microglia',fileNames)]
         foreach (i = fileNames) %dopar% {
             micro = read.table(paste0(restDir,'/',i))
-            micro = micro[!toupper(micro$V1) %in% effectedGenes,]
-            write.table(micro, quote = F, row.names = F, col.names = F, paste0(restDir,'/',i))
+            microAll = micro[!toupper(micro$V1) %in% effectedGenes,]
+            write.table(microAll, quote = F, row.names = F, col.names = F, paste0(restDir,'/',i))
+            
+            actiMicro = micro[toupper(micro$V1) %in% activationGenes,]
+            write.table(actiMicro, quote = F, row.names = F, col.names = F, paste0(restDir,'/',i,'_activation'))
+            
+            deactiMicro = micro[toupper(micro$V1) %in% deactivationGenes,]
+            write.table(deactiMicro, quote = F, row.names = F, col.names = F, paste0(restDir,'/',i,'_deactivation'))
         }
     }
     
