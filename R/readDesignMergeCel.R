@@ -13,7 +13,6 @@ readMouseCel = function(GSMs,mouseDir='cel',file=NA){
 
     allCells = affy::list.celfiles(mouseDir, recursive = T)
     files = sapply(paste0('\\Q',GSMs,'\\E'),function(x){grep(paste0(x,'[.](C|c)(E|e)(L|l)'),allCells,value=T)})
-    
     # notice if files are missing. send out a warning
     if (files %>% sapply(len)  %>% is_greater_than(0) %>% not %>%  any){
         stop('some cel files are missing: ',
@@ -39,7 +38,7 @@ readMouseCel = function(GSMs,mouseDir='cel',file=NA){
     }
     aned = aned[!aned$Gene.Symbol == '',]
     
-    names(aned) = gsub('[.](C|c)(E|e)(L|l)','',names(aned))
+    names(aned) = gsubMult(c('[.](C|c)(E|e)(L|l)','[.](G|g)(z|Z)'),c('',''),names(aned))
     
     if (!is.na(file)){
         write.csv(aned, file, row.names=FALSE)
@@ -70,9 +69,6 @@ readDesignMergeCel = function (desFile, normalize, celRegex, celDir, expFile,des
     
     list[genes,exp] = sepExpr(aned)
     #boxplot(aned[,4:ncol(aned)])
-    gsms = regmatches(design[, 1], gregexpr(celRegex, design[, 1],perl=T))
-
-    #gsms = regmatches(df[, 1], gregexpr("(GSM\\d\\d\\d\\d\\d(\\d|))|(PC\\d....)|(Y+.*?((?=(,))|\\d+))|(((?<=:)|(?<=,))A\\d.*?30A)|(v2_(?![G,H,r]).*?((?=(,))|($)))|(SSC.*?((?=(,))|($)))|(MCx.*?((?=(,))|($)))|(Cbx.*?((?=(,))|($)))", df[, 1],perl=T))
 
     header = names(exp)
 
