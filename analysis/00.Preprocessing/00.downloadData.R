@@ -5,8 +5,10 @@ library(ogbox)
 library(oligoClasses)
 library(affy)
 source('R/mostVariable.R')
+source('R/readHumanCel.R')
 library(XLConnect)
 library(RCurl)
+library(sva)
 # download gemma annotations ------
 dir.create('data/GemmaAnnots/', showWarnings=F)
 getGemmaAnnotGoogle('GPL1261','data/GemmaAnnots/GPL1261',annotType='noParents')
@@ -16,12 +18,36 @@ getGemmaAnnotGoogle('GPL96','data/GemmaAnnots/GPL96',annotType='noParents')
 getGemmaAnnotGoogle('GPL97','data/GemmaAnnots/GPL97',annotType='noParents')
 getGemmaAnnotGoogle('GPL5175','data/GemmaAnnots/GPL5175',annotType='noParents')
 getGemmaAnnotGoogle('GPL6884','data/GemmaAnnots/GPL6884',annotType='noParents')
+getGemmaAnnotGoogle('GPL6244','data/GemmaAnnots/GPL6244',annotType='noParents')
+getGemmaAnnotGoogle('GPL8300','data/GemmaAnnots/GPL8300',annotType='noParents')
 
-
+# full dataset download function
+downloadGSE = function(GSE, platform,datasetName){
+    gseDown(GSE, outdir =paste0('data/ce/',platform))
+    dir.create(paste0('data/',datasetName))
+    softDown(GSE,paste0('data/',datasetName,'/',GSE,'_family.soft.gz'))
+    system(paste0('gunzip data/', datasetName,'/',GSE,'_family.soft.gz'))
+    softData = softParser(softFile=paste0('data/',datasetName,'/',GSE,'_family.soft'),expression=F)
+    
+    softData$scanDate = sapply(softData$`!Sample_geo_accession`, function(x){
+        celfileDate(paste0('data/cel/',platform,'/',x, '.cel'))
+    })
+    return(softData)
+}
 
 # mouse rna seq data download 02 ------
 download.file(url= 'http://linnarssonlab.org/blobs/cortex/expression_mRNA_17-Aug-2014.txt', 
               destfile='data/linnarsonSingleCell/mouseRNASeq_Zeisel 2015.txt')
+download.file(url = 'http://science.sciencemag.org/highwire/filestream/628248/field_highwire_adjunct_files/1/aaa1934_TableS1.xlsx',
+              destfile = 'data/linnarsonSingleCell/markerGenes.xlsx')
+download.file(url = 'http://linnarssonlab.org/blobs/cortex/expression_spikes_17-Aug-2014.txt',
+              destfile = 'data/linnarsonSingleCell/expression_spikes_17-Aug-2014.txt')
+
+linnarsonMarkers = XLConnect::loadWorkbook('data/linnarsonSingleCell/markerGenes.xlsx')
+linnarsonMarkers = XLConnect::readWorksheet(linnarsonMarkers, sheet = 1, header = TRUE)
+linnarsonMarkers = linnarsonMarkers[-1,]
+linnarsonMarkers %<>% lapply(trimNAs)
+dput(linnarsonMarkers,file='data/linnarsonSingleCell/markerGenes')
 
 # human rna seq data download from linnarson 03-----
 gsms = gsmFind('GSE67835')
@@ -288,7 +314,7 @@ mostVariableCT(paste0(bloodDir,'bloodExp.csv'),
                selectionNaming = 'Abreviated.name',
                design=paste0(bloodDir,'BloodCells.tsv'))
 
-# lymphoma stuff
+# lymphoma stuff ---------------
 gseDown(GSE='GSE65135',regex='lymph',outDir='data/cel/GPL570')
 cels =celFiles('data/cel/GPL570',full.names=T) 
 cels = cels[grep(regexMerge(gsmFind('GSE65135', 'lymph')), cels)]
@@ -316,13 +342,14 @@ PBMCcibersort = readWorksheet(PBMCcibersort, sheet = 1, header = TRUE)
 
 write.table(PBMCcibersort, paste0(bloodDir,'PBMCcibersort.tsv'),sep = '\t', quote=FALSE, row.names=FALSE)
 
-# parkinsons substantia nigra
+# parkinsons substantia nigra incomplete---------
 gseDown('GSE7621',outDir='data/cel/GPL570/')
-softDown('GSE7621','data/GSE7621_family.soft.gz')
-system('gunzip data/GSE7621_family.soft.gz')
+softDown('GSE7621','data/parkinsons/GSE7621_family.soft.gz')
+system('gunzip data/parkinsons/GSE7621_family.soft.gz')
+softParser(softFile='data/parkinsons/GSE7621_family.soft',expression=F)
 
 
-write.design(softData,'data/GSE7621_parkinsonsMeta.tsv')
+write.design(softData,'data/parkinsons/GSE7621_parkinsonsMeta.tsv')
 
 
 affy = ReadAffy(filenames = cels)
@@ -330,16 +357,55 @@ affy = ReadAffy(filenames = cels)
 norm = rma(affy)
 annotated = gemmaAnnot(norm, 'data/GemmaAnnots/GPL570')
 annotated = mostVariable(annotated)
-write.csv(annotated, paste0('data/','GSE7621_parkinsonsExp.csv'), row.names = F)
+write.csv(annotated, paste0('data/parkinsons/','GSE7621_parkinsonsExp.csv'), row.names = F)
+
+# alzheimer's data ---------
+gseDown('GSE36980',outDir='data/cel/GPL6244/') # change 
+dir.create('data/alzheimers')
+softDown('GSE36980','data/alzheimers/GSE36980_family.soft.gz')
+system('gunzip data/alzheimers/GSE36980_family.soft.gz')
+softData = softParser(softFile='data/alzheimers/GSE36980_family.soft',expression=F)
 
 
-# developmental data
+
+softData = softData[,c('!Sample_characteristics_ch1 = age',
+                       '!Sample_characteristics_ch1 = Sex',
+                       '!Sample_characteristics_ch1 = tissue',
+                       '!Sample_geo_accession',
+                       '!Sample_title',
+                       '!Sample_source_name_ch1')]
+colnames(softData) = c('Age',
+                       'Sex',
+                       'Tissue',
+                       'GSM',
+                       'Title',
+                       'Source')
+
+softData$scanDate = sapply(softData$GSM, function(x){
+    celfileDate(paste0('data/cel/GPL6244/',x, '.cel'))
+})
+
+softData$scanDate %<>% as.Date
+softData %<>% mutate(alzheimers = str_extract(Source,'AD|non-AD'))
+write.design(softData,'data/alzheimers/GSE36980_alzheimersMeta.tsv')
+
+
+expr = readOligoCel(softData$GSM, 
+             'GPL6244',
+             celdir = 'data/cel/GPL6244/')
+list[gen,exp] = expr %>% sepExpr
+expr = mostVariable(expr, treshold = exp %>% unlist %>% median)
+
+write.csv(expr, paste0('data/alzheimers/','GSE36980_alzheimersExp.csv'), row.names = F)
+
+
+# developmental data incomplete. might not be necesary ---------
 softDown('GSE25219','data/development/GSE25219_family.soft.gz')
 system('gunzip data/development/GSE25219_family.soft.gz')
 softParser(softFile='data/development/GSE25219_family.soft',expression=F)
 
 
-# allen brain human data
+# allen brain human data ----------
 dir.create('data/allenBrain')
 download.file('http://human.brain-map.org/api/v2/data/MicroarraySlide/query.csv?num_rows=all&criteria=well_known_files,structures,microarray_data_sets(specimen(donor),products[id$eq2])&tabular=microarray_slides.barcode,microarray_slides.id%20as%20array_id,microarray_slides.rna_in_array,microarray_slides.rna_in_labeling_reaction,microarray_slides.sample_id%20as%20tissue_sample_id,structures.name%20as%20structure,specimens.rna_integrity_number,donors.name%20as%20donor,well_known_files.download_link',
               'data/allenBrain/metadata.csv')
@@ -375,10 +441,73 @@ dir.create('data/allenBrain/H0351.1016')
 system('unzip -n data/allenBrain/H0351.1016.zip -d data/allenBrain/H0351.1016')
 
 
-# allen institute single cell data 
+# allen institute single cell data -------------
 download.file('ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE71nnn/GSE71585/suppl/GSE71585_RefSeq_RPKM.csv.gz',
               'data/allenBrainSingleCells/GSE71585_RefSeq_RPKM.csv.gz')
 system('gunzip data/allenBrainSingleCells/GSE71585_RefSeq_RPKM.csv.gz')
 
+download.file('ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE71nnn/GSE71585/suppl/GSE71585_ERCC_and_tdTomato_RPKM.csv.gz',
+              'data/allenBrainSingleCells/GSE71585_ERCC_and_tdTomato_RPKM.csv.gz')
+system('gunzip data/allenBrainSingleCells/GSE71585_ERCC_and_tdTomato_RPKM.csv.gz')
+
+download.file('ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE71nnn/GSE71585/suppl/GSE71585_ERCC_and_tdTomato_counts.csv.gz',
+              'data/allenBrainSingleCells/GSE71585_ERCC_and_tdTomato_counts.csv.gz')
+system('gunzip data/allenBrainSingleCells/GSE71585_ERCC_and_tdTomato_counts.csv.gz')
+
+
+# use XLConnect here because it acts funny when used with gplots
 download.file('http://www.nature.com/neuro/journal/vaop/ncurrent/extref/nn.4216-S8.xlsx',
               'data/allenBrainSingleCells/markerGenes.xlsx')
+allenMarkers = XLConnect::loadWorkbook('data/allenBrainSingleCells/markerGenes.xlsx')
+allenMarkers = XLConnect::readWorksheet(allenMarkers, sheet = 1, header = TRUE)
+write.design(allenMarkers,'data/allenBrainSingleCells/markerGenes.tsv')
+nam =  allenMarkers$Final.Cluster.ID
+allenTypes = paste0(allenMarkers$Transcriptomic.type,', ',allenMarkers$Col3)
+allenTypes %<>% gsub('/','_',x=.)
+allenMarkers = apply(allenMarkers,1,function(x){
+    c((x['Present.Markers'] %>% strsplit(', ') %>% .[[1]]), {
+        if(is.na(x['Col3'])){
+            x['Transcriptomic.type']
+        } else{
+            x['Col3']
+        }
+    })
+})
+names(allenMarkers) = allenTypes
+names(allenMarkers) %<>% gsub(' ','',.)
+dput(allenMarkers,file='data/allenBrainSingleCells/markerGenes')
+
+
+download.file('http://www.nature.com/neuro/journal/vaop/ncurrent/extref/nn.4216-S5.xlsx',
+              'data/allenBrainSingleCells/cellMetadata.xlsx')
+allenMeta = XLConnect::loadWorkbook('data/allenBrainSingleCells/cellMetadata.xlsx')
+allenMeta = XLConnect::readWorksheet(allenMeta, sheet = 1, header = TRUE)
+write.design(allenMeta,'data/allenBrainSingleCells/cellMetadata')
+
+
+# HIV dementia macaca mulatta ----------------------------
+
+softData = downloadGSE('GSE2377',platform='GPL8300', datasetName='macacca_HIVdementia')
+
+softData = softData[,c('!Sample_title',
+                       '!Sample_source_name_ch1',
+                       '!Sample_description',
+                       'scanDate')]
+
+names(softData) = c('Title',
+                    'Tissue',
+                    'SIV',
+                    'scanData')
+softData$GSM = rownames(softData)
+
+softData$SIV = setNames(c('control','SIV'), c(T,F))[softData$SIV %>% grepl(pattern = 'not SIV', x=.) %>% as.char]
+write.design(softData,'data/macacca_HIVdementia/GSE2377_meta.tsv')
+
+cels = paste0('data/cel/GPL8300/',softData$GSM,'.cel')
+
+affy = ReadAffy(filenames = cels)
+norm = affy::rma(affy)
+annotated = gemmaAnnot(norm, 'data/GemmaAnnots/GPL8300')
+names(annotated) = gsub('[.]cel','',names(annotated))
+annotated = mostVariable(annotated, treshold = annotated %>% sepExpr %>% .[[2]] %>% unlist %>% median)
+write.csv(annotated, paste0('data/macacca_HIVdementia/','GSE2377_exp.csv'), row.names = F)

@@ -7,6 +7,7 @@ source('R/mostVariable.R')
 library(data.table)
 library(sva)
 library(dplyr)
+library(lme4)
 # for human regions ------
 
 source('R/GSE60862dataPrep.R')
@@ -134,9 +135,9 @@ fullEstimate(exp,
 
 
 # parkinson substantia nigra -----
-exp = read.exp('data/GSE7621_parkinsonsExp.csv')
+exp = read.exp('data/parkinsons/GSE7621_parkinsonsExp.csv')
 list[geneDat, expDat] = sepExpr(exp)
-des = read.design('data/GSE7621_parkinsonsMeta.tsv')
+des = read.design('data/parkinsons/GSE7621_parkinsonsMeta.tsv')
 des %>% mutate(parkinson = grepl('PD',title)) %>% 
     mutate(female = grepl('female',Characteristic)) -> des
 
@@ -167,7 +168,7 @@ genes = genes[sapply(genes,len)>2]
 fullEstimate(exp,
              genes=genes,
              geneColName="Gene.Symbol",
-             groups=des$parkinson,
+             groups=setNames(c('parkinson\'s','control'), c(T,F))[des$parkinson %>% as.character],
              outDir='analysis//05.Brain Estimations/estimations/parkinson/',
              seekConsensus=T,
              groupRotations=T,
@@ -179,10 +180,10 @@ fullEstimate(exp,
 fullEstimate(cbind(geneDat,expDatFemale),
              genes=genes,
              geneColName="Gene.Symbol",
-             groups=groupsFemale,
+             groups=setNames(c('parkinson\'s','control'), c(T,F))[groupsFemale %>% as.character],
              outDir='analysis//05.Brain Estimations/estimations/parkinsonFemale/',
-             seekConsensus=T,
-             groupRotations=T,
+             seekConsensus=F,
+             groupRotations=F,
              outlierSampleRemove=F,
              controlBased=FALSE,
              comparisons = 'all',
@@ -192,7 +193,7 @@ fullEstimate(cbind(geneDat,expDatFemale),
 fullEstimate(cbind(geneDat,expDatHealty),
              genes=genes,
              geneColName="Gene.Symbol",
-             groups=groupsHealty,
+             groups=setNames(c('parkinson\'s','control'), c(T,F))[groupsHealty %>% as.char], 
              outDir='analysis//05.Brain Estimations/estimations/parkinsonMalevsF/',
              seekConsensus=T,
              groupRotations=T,
@@ -205,14 +206,14 @@ fullEstimate(cbind(geneDat,expDatHealty),
 fullEstimate(cbind(geneDat,expDatMale),
              genes=genes,
              geneColName="Gene.Symbol",
-             groups=groupsFemale,
-             outDir='analysis//05.Brain Estimations/estimations/parkinsonFemale/',
+             groups=setNames(c('parkinson\'s','control'), c(T,F))[groupsMale %>% as.char],
+             outDir='analysis//05.Brain Estimations/estimations/parkinsonMale/',
              seekConsensus=T,
              groupRotations=T,
              outlierSampleRemove=F,
              controlBased=NULL,
              comparisons = 'all',
-             estimateFile = 'analysis//05.Brain Estimations/estimations/parkinsonFemale/estimations')
+             estimateFile = 'analysis//05.Brain Estimations/estimations/parkinsonMale/estimations')
 
 
 
@@ -258,3 +259,153 @@ fullEstimate(cbind(gene,exp),
              comparisons = 'all',
              estimateFile = 'analysis//05.Brain Estimations/estimations/substantiaNigraMvsF/estimations')
 
+# alzheimer's estimations --------------
+genes = puristOut('analysis/01.Gene Selection/FinalGenes/PyramidalDeep/Cortex/')
+genes = genes[sapply(genes,len)>2]
+
+
+list[gene,exp] = 'data/alzheimers/GSE36980_alzheimersExp.csv' %>% read.exp %>% sepExpr
+
+colnames(exp) = gsub(pattern= '[.]cel',replacement='', x=colnames(exp))
+
+design = read.design('data/alzheimers/GSE36980_alzheimersMeta.tsv')
+
+expCortex = exp[,design$Tissue %in% 'Frontal cortex']
+designCortex = design %>%  filter(Tissue %in% 'Frontal cortex')
+
+
+# remove outliers
+expCortex= expCortex[,-c(24,30)]
+designCortex = designCortex[-c(24,30),]
+
+fullEstimate(cbind(gene,expCortex),
+             genes=genes,
+             geneColName="Gene.Symbol",
+             groups=designCortex$alzheimers,
+             outDir='analysis//05.Brain Estimations/estimations/alzheimers/frontalCortex',
+             seekConsensus=T,
+             groupRotations=T,
+             outlierSampleRemove=F,
+             controlBased=NULL,
+             comparisons = 'all',
+             estimateFile = 'analysis//05.Brain Estimations/estimations/alzheimers/frontalCortex/estimations')
+
+expTempCortex = exp[,design$Tissue %in% 'Temporal cortex']
+designTempCortex = design %>%  filter(Tissue %in% 'Temporal cortex')
+
+fullEstimate(cbind(gene,expTempCortex),
+             genes=genes,
+             geneColName="Gene.Symbol",
+             groups=designTempCortex$alzheimers,
+             outDir='analysis//05.Brain Estimations/estimations/alzheimers/temporalCortex',
+             seekConsensus=T,
+             groupRotations=T,
+             outlierSampleRemove=T,
+             controlBased=NULL,
+             comparisons = 'all',
+             estimateFile = 'analysis//05.Brain Estimations/estimations/alzheimers/temporalCortex/estimations')
+
+genesHippo = puristOut('analysis/01.Gene Selection/FinalGenes/PyramidalDeep/Hippocampus//')
+genesHippo = genesHippo[sapply(genesHippo,len)>2]
+expHippo = exp[,design$Tissue %in% 'Hippocampus']
+designHippo = design %>%  filter(Tissue %in% 'Hippocampus')
+
+fullEstimate(cbind(gene,expHippo),
+             genes=genesHippo,
+             geneColName="Gene.Symbol",
+             groups=designHippo$alzheimers,
+             outDir='analysis//05.Brain Estimations/estimations/alzheimers/hippocampus',
+             seekConsensus=T,
+             groupRotations=T,
+             outlierSampleRemove=F,
+             controlBased=NULL,
+             comparisons = 'all',
+             estimateFile = 'analysis//05.Brain Estimations/estimations/alzheimers/hippocampus/estimations')
+
+# advanced analysis with linear models. factoring out sex and shit
+
+fcEstimation = read.table('analysis/05.Brain Estimations/estimations/alzheimers/frontalCortex/estimations')
+
+fcFit = lapply(1:(ncol(fcEstimation)-1), function(i){
+    data = data.frame(estimation = fcEstimation[,i], 
+                      disease = designCortex$alzheimers, 
+                      age = designCortex$Age,
+                      sex = designCortex$Sex)
+    lm(estimation~disease+age+sex,data=data) %>% summary %$% coefficients
+    
+    anova(lm(estimation~disease,data=data),
+          lm(estimation~disease+age,data=data)#,
+         # lm(estimation~disease+age+sex,data=data)
+         )
+    
+    
+})
+
+names(fcFit) = colnames(fcEstimation)[1:(ncol(fcEstimation)-1)]
+
+
+tcEstimation = read.table('analysis/05.Brain Estimations/estimations/alzheimers/temporalCortex/estimations')
+
+tcFit = lapply(1:(ncol(tcEstimation)-1), function(i){
+    data = data.frame(estimation = tcEstimation[,i], 
+                      disease = designTempCortex$alzheimers, 
+                      age = designTempCortex$Age,
+                      sex = designTempCortex$Sex)
+    lm(estimation~disease+age+sex,data=data) %>% summary %$% coefficients
+    
+})
+
+names(tcFit) = colnames(tcEstimation)[1:(ncol(tcEstimation)-1)]
+
+hipEstimation = read.table('analysis/05.Brain Estimations/estimations/alzheimers/hippocampus//estimations')
+
+hipFit = lapply(1:(ncol(hipEstimation)-1), function(i){
+    data = data.frame(estimation = hipEstimation[,i], 
+                      disease = designHippo$alzheimers, 
+                      age = designHippo$Age,
+                      sex = designHippo$Sex)
+    lm(estimation~disease+age+sex,data=data) %>% summary %$% coefficients
+    
+})
+
+names(hipFit) = colnames(hipEstimation)[1:(ncol(hipEstimation)-1)]
+
+
+# SIV monkey head --------------
+SIVexp = read.exp('data/macacca_HIVdementia/GSE2377_exp.csv')
+SIVdes = read.design('data/macacca_HIVdementia/GSE2377_meta.tsv')
+list[gene,exp] = SIVexp %>% sepExpr
+
+SIVfrontal = SIVdes %>% filter(Tissue == 'frontal lobe')
+SIVexpFrontal = exp[,SIVfrontal$GSM]
+
+genes = puristOut('analysis/01.Gene Selection/FinalGenes/PyramidalDeep/Cortex/')
+
+fullEstimate(cbind(gene,SIVexpFrontal),
+             genes=genes,
+             geneColName="Gene.Symbol",
+             groups=SIVfrontal$SIV,
+             outDir='analysis//05.Brain Estimations/estimations/SIVDementedMonkey/frontalLobe',
+             seekConsensus=T,
+             groupRotations=T,
+             outlierSampleRemove=F,
+             controlBased=NULL,
+             comparisons = 'all',
+             estimateFile = 'analysis//05.Brain Estimations/estimations/SIVDementedMonkey/frontalLobe/estimations')
+
+SIVfrontal = SIVdes %>% filter(Tissue == 'frontal lobe')
+SIVexpFrontal = exp[,SIVfrontal$GSM]
+
+genes = puristOut('analysis/01.Gene Selection/FinalGenes/PyramidalDeep/Cortex/')
+
+fullEstimate(cbind(gene,SIVexpFrontal),
+             genes=genes,
+             geneColName="Gene.Symbol",
+             groups=SIVfrontal$SIV,
+             outDir='analysis//05.Brain Estimations/estimations/SIVDementedMonkey/frontalLobe',
+             seekConsensus=T,
+             groupRotations=T,
+             outlierSampleRemove=F,
+             controlBased=NULL,
+             comparisons = 'all',
+             estimateFile = 'analysis//05.Brain Estimations/estimations/SIVDementedMonkey/frontalLobe/estimations')
