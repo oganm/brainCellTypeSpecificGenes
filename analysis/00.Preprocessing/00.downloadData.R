@@ -82,13 +82,14 @@ write.csv(allExpr,'data/humanRNASeq.csv',quote=F)
 
 
 
-# get human microarray data for healthy brain regions -----------
+# UCL human microarray data for healthy brain regions -----------
+dir.create('data/UCLregions',showWarnings=FALSE)
 download.file('ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE60nnn/GSE60862/soft/GSE60862_family.soft.gz',
-              destfile='data/GSE60862_family.soft.gz')
-system('gunzip data/GSE60862_family.soft.gz')
+              destfile='data/UCLregions/GSE60862_family.soft.gz')
+system('gunzip data/UCLregions/SE60862_family.soft.gz')
 
 # deal with softfile
-softData = softParser('data/GSE60862_family.soft')
+softData = softParser('data/UCLregions/GSE60862_family.soft')
 
 softData = softData[,c('!Sample_characteristics_ch1 = age at death (in years)', 
                        '!Sample_characteristics_ch1 = ancestry',
@@ -122,7 +123,7 @@ colnames(softData) = c('deatAge',
 
 
 # download cel files
-write.design(softData,file='data/GSE60862_meta')
+write.design(softData,file='data/UCLregions/GSE60862_meta')
 # softData = read.design('data/GSE60862_meta')
 dir.create('data/cel/GPL5175')
 sapply(softData$GSM,function(x){
@@ -134,7 +135,16 @@ sapply(softData$GSM,function(x){
 softData$scanDate = sapply(softData$GSM, function(x){
     celfileDate(paste0('/home/omancarci/masterOfCellTypes/cel/GPL5175/',x, '.cel.gz'))
 })
-write.design(softData,file='data/GSE60862_meta')
+write.design(softData,file='data/UCLregions/GSE60862_meta')
+
+softFile = read.design('data/UCLregions/GSE60862_meta')
+softFile = softFile[ !is.na(softFile$pH) 
+                     &
+                        !softFile$deathCause=='Cancer',]
+
+readHumanCel(softFile$GSM,'data/UCLregions/GSE60862_expression',humanDir='data/cel//GPL5175')
+
+
 
 # human microarray data for huntington disease --------------------
 download.file('ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE3nnn/GSE3790/soft/GSE3790_family.soft.gz',
@@ -174,7 +184,7 @@ softData$scanDate = apply(softData,1, function(x){
     celfileDate(paste0('/home/omancarci/masterOfCellTypes/cel/',x['platform'],'/',x['GSM'], '.cel.gz'))
 })
 
-
+# huntington ----------------
 unique(softData$source2)
 dir.create('data/huntington')
 for (x in unique(softData$source2)){

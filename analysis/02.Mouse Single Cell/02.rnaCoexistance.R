@@ -3,7 +3,6 @@ library(ogbox)
 source('R/puristOut.R')
 source('R/rnaCoexist.R')
 
-# get the file from Linarrson lab's website if this line doesn't work in the future, contact us or the Linnarson lab
 rnaSeq = read.table('data/linnarsonSingleCell/mouseRNASeq_Zeisel 2015.txt', sep= '\t', comment.char= "",stringsAsFactors=F)
 rnaMeta = rnaSeq[1:10,3:ncol(rnaSeq)]
 rnaMeta = as.data.frame(t(rnaMeta))
@@ -25,15 +24,25 @@ markerGenes = puristOut('analysis//01.Gene Selection//FinalGenes/PyramidalDeep/C
 # no treshold run
 tresholds = read.table('analysis/02.Mouse Single Cell/noTresh')
 tresholds = tresholds[maximExp >= 1,]
-for (i in c(0.3333, 0.40, 0.5, 0.6, 0.7, 0.8, 0.9 ,1)){
-    rnaCoexist(rnaExp,
-               tresholds,
-               markerGenes,
-               i,
-               F,
-               paste0('analysis//02.Mouse Single Cell/Output/NoTreshold',i),
-               paste0('analysis//02.Mouse Single Cell/Plots/NoTreshold',i))
-}
+# for (i in c(0.3333, 0.40, 0.5, 0.6, 0.7, 0.8, 0.9 ,1)){
+#     rnaCoexist(rnaExp,
+#                tresholds,
+#                markerGenes,
+#                i,
+#                F,
+#                paste0('analysis//02.Mouse Single Cell/Output/NoTreshold',i),
+#                paste0('analysis//02.Mouse Single Cell/Plots/NoTreshold',i))
+# }
+
+
+rnaCoexist(rnaExp,
+           tresholds,
+           markerGenes,
+           T,
+           paste0('analysis//02.Mouse Single Cell/Output/NoTreshold'),
+           paste0('analysis//02.Mouse Single Cell/Plots/NoTreshold'),
+           cores  = 16)
+
 # treshold run 
 tresholds = read.table('analysis/02.Mouse Single Cell/tresholds')
 tresholds = tresholds[maximExp >= 1,]

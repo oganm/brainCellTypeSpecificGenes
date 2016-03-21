@@ -81,6 +81,8 @@ plotEstimates = function(estimates,groups,plotNames, sigTest =  wilcox.test,
     if (typeof(estimates)!='list'){
         estimates = list(estimates)
     }
+    
+    estimates %<>% lapply(scale01)
 
     if (!is.null(comparisons)){
         if (comparisons == 'all'){
@@ -114,8 +116,8 @@ plotEstimates = function(estimates,groups,plotNames, sigTest =  wilcox.test,
     # plotting of things
     for (i in 1:len(estimates)){
         frame = data.frame(PC1 = estimates[[i]], group = groups[[i]])
-        windowUp = max((frame$PC1)) + 1
-        windowDown = min((frame$PC1)) - 0.5
+        # windowUp = max((frame$PC1)) + 1
+        # windowDown = min((frame$PC1)) - 0.5
 
         # prepare significance text
         if (!is.null(comparisons)){ 
@@ -129,7 +131,8 @@ plotEstimates = function(estimates,groups,plotNames, sigTest =  wilcox.test,
             geom_boxplot(width=0.1,fill = 'lightblue') +
             geom_point(size = 3) +
             ggtitle(names(estimates)[i]) +
-            scale_y_continuous(limits=c(windowDown, windowUp),
+            #scale_y_continuous(limits=c(windowDown, windowUp),
+            scale_y_continuous(limits=c(-.05, 1.05),
                                name="Relative estimate of cell type amounts") +
             theme_bw() +
             theme(axis.text.x  = element_text(size=25, angle=90),
@@ -138,7 +141,8 @@ plotEstimates = function(estimates,groups,plotNames, sigTest =  wilcox.test,
                   title = element_text(vjust=0.5, size=25),
                   axis.text.y = element_text(size = 13))
         if (!is.null(comparisons)){
-         lePlot = lePlot +    annotate('text', x = 0.1 , y = windowUp ,
+         lePlot = lePlot +   # annotate('text', x = 0.1 , y = windowUp ,
+             annotate('text', x = 0.1 , y = 1.05 ,
                                        label = sigText ,
                                        hjust = 0, vjust=1, size = 4.5)
         }

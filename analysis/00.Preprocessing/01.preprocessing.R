@@ -1,6 +1,7 @@
 # Preprocessing of the data. The output files of this directory are also present in the data folder.
 library(ogbox)
 library(praise)
+library(magrittr)
 source('R/readDesignMergeCel.R')
 source('R/quantileNormalize.R')
 source('R/mostVariable.R')

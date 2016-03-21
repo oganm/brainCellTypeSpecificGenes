@@ -7,7 +7,7 @@ GSE60862dataPrep = function(filter = 'median'){
     source('R/mostVariable.R')
 
     
-    humanExp = fread('data/GSE60862_expression')
+    humanExp = fread('data/UCLregions/GSE60862_expression')
     humanExp = humanExp[!is.na(humanExp$Gene.Symbol),]
     humanExp = humanExp[humanExp$Gene.Symbol!='',]
     
@@ -25,7 +25,7 @@ GSE60862dataPrep = function(filter = 'median'){
     colnames(exprData) = str_extract(string=colnames(exprData), pattern='GSM.*?(?=\\.)')
     
     
-    softFile = read.design('data/GSE60862_meta')
+    softFile = read.design('data/UCLregions/GSE60862_meta')
     softFile = softFile[match(colnames(exprData) ,softFile$GSM),]
     
     # remove outliers detected in the previous step

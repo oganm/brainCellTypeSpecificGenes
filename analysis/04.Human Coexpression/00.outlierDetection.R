@@ -2,13 +2,13 @@
 library(limma)
 library(gplots)
 
-humanExp = fread('data/GSE60862_expression')
+humanExp = fread('data/UCLregions/GSE60862_expression')
 humanExp = humanExp[!is.na(humanExp$Gene.Symbol),]
 humanExp = humanExp[humanExp$Gene.Symbol!='',]
 
 list[genes,expr] = sepExpr(humanExp)
 colnames(expr) = gsub('\\.cel\\.gz','',colnames(expr))
-softFile = read.design('data/GSE60862_meta')
+softFile = read.design('data/UCLregions/GSE60862_meta')
 
 groups = unique(softFile$brainRegion)
 pairwise = combn(groups,2)

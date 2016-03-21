@@ -86,7 +86,7 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
     #browser()
     #for (x in 5) {
     simuProbs = 
-        lapply(1:len(genesInSeq),function(x){
+        mclapply(1:len(genesInSeq),function(x){
             print(x)
             if (len(genesInSeq[[x]])<2){
                 return(NA)
@@ -114,7 +114,7 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
                       )
             print('rereroro')
             return(a)
-        } #, mc.cores=cores
+        } , mc.cores=cores
         )
     names(simuProbs) = names(genesInSeq)
     print('fake gene correlations calculated')
@@ -175,11 +175,11 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
             rownames(toPlot) = rownames(presence)[rownames(presence) %in% genes[[i]]]
             png(paste0(plotOut,'/', names(genes)[i],'_heat.png'), height = 800, width= 800)
             tryCatch({
-                heatmap.2(t(toPlot),trace= 'none', Rowv=T, Colv=T,dendrogram='column',main = names(genes)[i])
+                heatmap.2(t(toPlot),trace= 'none', Rowv=T, Colv=T,dendrogram='column',main = names(genes)[i], col = c('white',muted('blue')))
             }, error = function(e){
-                tryCatch({heatmap.2(t(toPlot),trace= 'none', Rowv=T, Colv=F,dendrogram='none',main = names(genes)[i])},
+                tryCatch({heatmap.2(t(toPlot),trace= 'none', Rowv=T, Colv=F,dendrogram='none',main = names(genes)[i], col = c('white',muted('blue')))},
                          error = function(e){
-                             heatmap.2(t(toPlot),trace= 'none', Rowv=F, Colv=F,dendrogram='none',main = names(genes)[i])
+                             heatmap.2(t(toPlot),trace= 'none', Rowv=F, Colv=F,dendrogram='none',main = names(genes)[i], col = c('white',muted('blue')))
                          })
             })
             dev.off()

@@ -23,27 +23,25 @@ markerGenes$GabaVIPReln = markerGenes$GabaVIPReln[!markerGenes$GabaVIPReln %in% 
 print('beginning thresholding')
 tresholds = read.table('analysis/03.Human Single Cell/noTresh')
 tresholds = tresholds[maximExp >= 1,]
-for (i in c(0.3333, 0.40, 0.5, 0.6, 0.7, 0.8, 0.9 ,1)){
-    print(i)
-    rnaCoexist(rnaExp,
-               tresholds,
-               markerGenes,
-               i,
-               T,
-               paste0('analysis//03.Human Single Cell//Output/NoTreshold',i),
-               paste0('analysis//03.Human Single Cell//Plots/NoTreshold',i))
-}
+
+
+rnaCoexist(rnaExp,
+           tresholds,
+           markerGenes,
+           T,
+           paste0('analysis//03.Human Single Cell//Output/NoTreshold'),
+           paste0('analysis//03.Human Single Cell//Plots/NoTreshold'),
+           cores  = 16)
 
 
 # treshold run  ---------
 tresholds = read.table('analysis/03.Human Single Cell//tresholds')
 tresholds = tresholds[maximExp >= 1,]
-for (i in c(0.3333, 0.40, 0.5, 0.6, 0.7, 0.8, 0.9 ,1)){
+
 rnaCoexist(rnaExp,
            tresholds,
            markerGenes,
-           i,
            T,
-           paste0('analysis//03.Human Single Cell/Output/treshold',i),
-           paste0('analysis//03.Human Single Cell/Plots/treshold',i))
-}
+           paste0('analysis//03.Human Single Cell//Output/Threshold'),
+           paste0('analysis//03.Human Single Cell//Plots/Threshold'),
+           cores  = 16)

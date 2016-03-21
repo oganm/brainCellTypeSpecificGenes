@@ -8,6 +8,7 @@ library(data.table)
 library(sva)
 library(dplyr)
 library(lme4)
+library(gplots)
 # for human regions ------
 
 source('R/GSE60862dataPrep.R')
@@ -29,7 +30,7 @@ fullEstimate(exprData,
              geneColName="Gene.Symbol",
              groups=groups,
              outDir='analysis//05.Brain Estimations/estimations/overall/',
-             seekConsensus=T,
+             seekConsensus=F,
              groupRotations=T,
              outlierSampleRemove=F,
              controlBased=NULL,
@@ -135,6 +136,8 @@ fullEstimate(exp,
 
 
 # parkinson substantia nigra -----
+genes = puristOut('analysis/01.Gene Selection/FinalGenes/PyramidalDeep/Midbrain/')
+
 exp = read.exp('data/parkinsons/GSE7621_parkinsonsExp.csv')
 list[geneDat, expDat] = sepExpr(exp)
 des = read.design('data/parkinsons/GSE7621_parkinsonsMeta.tsv')
@@ -153,7 +156,7 @@ groupsHealty = des$female[des$parkinson==F]
 rownames(expDatHealty) = geneDat$Gene.Symbol
 expDatHealty %>% as.matrix -> expDatHealtyHeat
 colnames(expDatHealtyHeat) = groupsHealty
-heatmap.2(expDatHealtyHeat[geneDat$Gene.Symbol %in% (genes$Dopaminergic %>% mouse2human)$humanGene,] %>% as.matrix,scale='row',trace='none')
+# heatmap.2(expDatHealtyHeat[geneDat$Gene.Symbol %in% (genes$Dopaminergic %>% mouse2human)$humanGene,] %>% as.matrix,scale='row',trace='none')
 
 #exp %>% filter(Gene.Symbol %in% c(mouse2human(genes$Dopaminergic)$humanGene,'XIST')) %>% 
 #    select_( .dots  = c(des %>% filter(parkinson) %>% select(GSM) %>% unlist %>% paste0('.cel')),'Gene.Symbol') ->bok
@@ -173,7 +176,7 @@ fullEstimate(exp,
              seekConsensus=T,
              groupRotations=T,
              outlierSampleRemove=F,
-             controlBased=FALSE,
+             controlBased=NULL,
              comparisons = 'all',
              estimateFile = 'analysis//05.Brain Estimations/estimations/parkinson/estimations')
 
@@ -185,7 +188,7 @@ fullEstimate(cbind(geneDat,expDatFemale),
              seekConsensus=F,
              groupRotations=F,
              outlierSampleRemove=F,
-             controlBased=FALSE,
+             controlBased=NULL,
              comparisons = 'all',
              estimateFile = 'analysis//05.Brain Estimations/estimations/parkinsonFemale/estimations')
 
@@ -193,12 +196,12 @@ fullEstimate(cbind(geneDat,expDatFemale),
 fullEstimate(cbind(geneDat,expDatHealty),
              genes=genes,
              geneColName="Gene.Symbol",
-             groups=setNames(c('parkinson\'s','control'), c(T,F))[groupsHealty %>% as.char], 
+             groups=setNames(c('female','male'), c(T,F))[groupsHealty %>% as.char], 
              outDir='analysis//05.Brain Estimations/estimations/parkinsonMalevsF/',
              seekConsensus=T,
              groupRotations=T,
              outlierSampleRemove=F,
-             controlBased=FALSE,
+             controlBased=NULL,
              comparisons = 'all',
              estimateFile = 'analysis//05.Brain Estimations/estimations/parkinsonMalevsF/estimations')
 
@@ -217,17 +220,43 @@ fullEstimate(cbind(geneDat,expDatMale),
 
 
 
-hede = cellTypeEstimate(exprData=exp,
+allParkinson = cellTypeEstimate(exprData=exp,
                  genes=genes,
                  geneColName='Gene.Symbol',
                  outlierSampleRemove=F,
-                 groups=des$parkinson,
+                 groups=setNames(c('parkinson\'s','control'), c(T,F))[des$parkinson %>% as.character],
                  controlBased= NULL,
                  seekConsensus = T,
                  PC = 1)
 
+
+originalMeta = read.design('data/parkinsons/originalPaperMeta.tsv')
+originalMeta %<>% mutate(group = gsub(pattern='[0-9]',replacement='',x= Control))
+originalMeta %>% 
+    group_by(Gender, group) %>% 
+    summarize(mean(DeathAge), median(DeathAge), mean(pH), median(pH), sd(DeathAge), sd(pH),
+              max(DeathAge), min(DeathAge),n())
+
+
+parkinsonOnset = read.design('data/parkinsons/parkinsonOnsetMetadata.tsv')
+
+# linear fit accounting for sex
+frameToFit = data.frame(estimate = allParkinson$estimates$Dopaminergic,
+                        parkinsons = setNames(c('parkinson\'s','control'), c(T,F))[des$parkinson %>% as.character],
+                        sex = setNames(c('female','male'), c(T,F))[des$female %>% as.char])
+
+lm(estimate ~ -1 + parkinsons + sex,
+   data = frameToFit) %>% summary
+anova(lm(estimate ~ parkinsons,
+         data = frameToFit),
+      lm(estimate ~  parkinsons*sex,
+         data = frameToFit))
+
+lmer(estimate ~  parkinsons + (1|sex), data = frameToFit)
+
+
 sapply(hede$estimates, function(x){
-    wilcox.test(x[!hede$groups$Dopaminergic] %>% unlist,x[hede$groups$Dopaminergic] %>% unlist)$p.value
+    wilcox.test(x[!hede$groups$Dopaminergic=='control'] %>% unlist,x[hede$groups$Dopaminergic!='control'] %>% unlist)$p.value
 }) %>% p.adjust(method='fdr')
 
 
