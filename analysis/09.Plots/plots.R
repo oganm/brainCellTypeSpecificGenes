@@ -9,6 +9,7 @@ library(scales)
 library(gplots)
 library(stringr)
 library(magrittr)
+library(pheatmap)
 source('R/cellColors.R')
 source('R/puristOut.R')
 source('R/heatmap.3.R')
@@ -52,7 +53,7 @@ for (i in 1:len(regionSamples)){
     heatCols = toColor(design$PyramidalDeep[!is.na(regionSamples[[i]])], colors)
     geneCols = toColor(geneCellTypes, colors)
     
-    png(paste0('analysis/09.Plots/GenePlots/',names(regionSamples)[i]),height=1000,width=1500)
+    png(paste0('analysis/09.Plots/GenePlots/',names(regionSamples)[i],'.png'),height=1000,width=1500)
     # heatmap.2(t(relExp),Rowv=F,Colv=F,trace='none',col=viridis(20),
     #           ColSideColors=heatCols$cols,RowSideColors=geneCols$cols,labRow='',labCol='', main = names(regionSamples[i]))
     # legend(title= 'Cell Types','bottomleft' ,legend= names(heatCols$palette), fill = heatCols$palette )
@@ -63,7 +64,7 @@ for (i in 1:len(regionSamples)){
     anotRow = data.frame('Specific Genes' = geneCellTypes, check.names=F)
     rownames(anotRow) = rownames(t(relExp))
     
-    pheatmap(t(relExp),fontsize=20,
+    pheatmap(t(relExp),fontsize=30,
              show_rownames=FALSE ,
              show_colnames=FALSE,
              annotation_col=anotCol,

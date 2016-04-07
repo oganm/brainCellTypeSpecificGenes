@@ -49,10 +49,15 @@ superImpose = function(genes,outDir,PC=1){
                      label = paste0('spearman correlation:\n',
                                     'Marker genes: ', format(cor(frame1$estimates,frame1$RealCounts,method='spearman'),digits=3), '\n',
                                     'Cibersort: ',format(cor(frame1$CibersortPred,frame1$RealCounts,method='spearman'),digits=3))
-            ) + geom_line(size=3,alpha=1/10) + ggtitle(names(estimates$estimates[i])) + theme(axis.title= element_text(size=17))
+            ) + geom_line(size=3,alpha=1/10) + ggtitle(names(estimates$estimates[i])) + theme(axis.title= element_text(size=25),
+                                                                                              plot.title = element_text(size=25),
+                                                                                              axis.text = element_text(size=18))
         
         p2 = ggplot(frame2, aes(y= CibersortPred ,x = RealCounts)) + geom_point(size = 4, color='red',shape=16) + geom_line(size=3,color='red',alpha=1/10) + theme_bw() %+replace% 
-            theme(panel.background = element_rect(fill = NA)) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.title= element_text(size=17)) +  ggtitle(names(estimates$estimates[i]))
+            theme(panel.background = element_rect(fill = NA)) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+                                                                      plot.title = element_text(size=25),
+                                                                      axis.title= element_text(size=25),
+                                                                      axis.text = element_text(size=18)) +  ggtitle(names(estimates$estimates[i]))
         
         
         g1 <- ggplot_gtable(ggplot_build(p1))
