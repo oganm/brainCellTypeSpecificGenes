@@ -82,12 +82,13 @@ regionize = function(design,regionNames,groupNames, regionHierarchy){
                         nchar %>% {.>0} %>% any
                 }) %>% all
                 if (!override){
-                toChild = regionBased$region[i] %>% 
-                    grepl(paste0('^',regexMerge( regionList[[j]], exact=TRUE)), .)
+                    toChild = regionBased$region[i] %>% 
+                        grepl(paste0('^',regexMerge( regionList[[j]], exact=TRUE)), .)
+                    inReg = inReg | toChild
                 }
                 
                 
-                inReg = inReg | toChild
+                
             }
             return(inReg)
             
