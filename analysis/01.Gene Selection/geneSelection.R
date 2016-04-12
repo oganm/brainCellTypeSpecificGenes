@@ -9,8 +9,8 @@ geneOut = 'analysis//01.Gene Selection/Fold'
 rotationOut = 'analysis//01.Gene Selection/Rotation'
 rotSelOut = 'analysis/01.Gene Selection/RotSel'
 
-#  groupNames = c('GabaDeep','PyramidalDeep','MajorType')
-groupNames = 'forContanim'
+groupNames = c('PyramidalDeep','MajorType')
+# groupNames = 'forContanim'
 regionNames = 'Region'
 # many steps requires parallel processes. set to cores cores by default
 cores = 15
@@ -22,7 +22,7 @@ geneSelect(paste0(dataDir,'/meltedDesign.tsv'),
            groupNames,
            regionNames,
            cores=cores,
-           debug='Midbrain_PyramidalDeep'
+           # debug='Midbrain_PyramidalDeep'
 )
 
 geneSelect(paste0(dataDir,'/meltedDesign2.tsv'),

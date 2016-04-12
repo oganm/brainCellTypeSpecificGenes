@@ -15,7 +15,8 @@ rotSelOut = 'analysis/01.Gene Selection/RotSel'
 
 #groupNames = c('GabaDeep','PyramidalDeep','MajorType')
 # groupNames = 'MajorType'
-groupNames = 'forContanim'
+groupNames = c('PyramidalDeep','MajorType')
+
 
 regionNames = 'Region'
 # many steps requires parallel processes. set to cores cores by default
