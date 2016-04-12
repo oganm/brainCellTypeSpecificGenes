@@ -16,7 +16,7 @@ regionize = function(design,regionNames,groupNames, regionHierarchy){
     regionsTree = regionHierarchy %>% unlist %>% names %>% strsplit(split='\\.') %>% unlist %>% unique
     
     # some non used samples have undefined regions, trim those since you don't use them anyway
-    regionsData = design[design[,groupNames]%>% apply(1,function(x){all(!is.na(x))}),
+    regionsData = design[design[,groupNames, drop=F]%>% apply(1,function(x){all(!is.na(x))}),
                          regionNames] %>% strsplit(',') %>% unlist %>% trimNAs %>% unique
    
     # ensure that every region in the dataset is somewhere in the tree
