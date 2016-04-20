@@ -3,6 +3,7 @@
 
 
 library(ogbox)
+library(GOADquery)
 source('R/geneSelect.R')
 source('R/microglialException.R')
 source('R/rotateSelect.R')
