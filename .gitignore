@@ -24,3 +24,9 @@ vignettes/*.pdf
 # OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
 .httr-oauth
 .Rproj.user
+
+analysis/01.Gene Selection/Fold
+analysis/01.Gene Selection/Fold2
+
+analysis/01.Gene Selection/RotSel
+analysis/01.Gene Selection/RotSel2

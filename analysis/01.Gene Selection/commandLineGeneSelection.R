@@ -14,8 +14,8 @@ rotationOut = 'analysis//01.Gene Selection/Rotation'
 rotSelOut = 'analysis/01.Gene Selection/RotSel'
 
 #groupNames = c('GabaDeep','PyramidalDeep','MajorType')
-# groupNames = 'MajorType'
-groupNames = c('PyramidalDeep','MajorType')
+# groupNames = c('PyramidalDeep','MajorType')
+groupNames = 'DopaSelect'
 
 
 regionNames = 'Region'
