@@ -5,6 +5,7 @@ require(parallel)
 require(reshape2)
 require(cluster)
 source('R/regionize.R')
+options(error = recover) 
 geneSelect = function(designLoc,
                       exprLoc,
                       outLoc,
@@ -136,8 +137,8 @@ geneSelect = function(designLoc,
     
     # the main loop around groups ------
     
-     foreach (i = 1:len(nameGroups)) %dopar% {
-    #for (i in 1:len(nameGroups)){
+    # foreach (i = 1:len(nameGroups)) %dopar% {
+    for (i in 1:len(nameGroups)){
          #debub point for groups
         typeNames = trimNAs(unique(nameGroups[[i]]))
         realGroups = vector(mode = 'list', length = length(typeNames))
@@ -146,8 +147,25 @@ geneSelect = function(designLoc,
             realGroups[[j]] = which(nameGroups[[i]] == typeNames[j])
         }
         
-        # if rotation is checked, get a subset of the samples. result is rounded. so too low numbers can make it irrelevant
+        
         if (!is.null(rotate)){
+            # this part equalizes representation from individual studies when rotating. 
+            print('yayay')
+            realGroups2 = lapply(realGroups, function(x){
+                articles = design[x,]$PMID
+                minRepresentation = articles %>%
+                    table(useNA = 'ifany') %>% 
+                    min
+                lapply (1:len(unique(articles)),function(j){
+                    x[articles %in% unique(articles)[j]] %>% 
+                        sample(size=minRepresentation,replace=FALSE) #%>% #if you decide to remove samples per study comment this part in, delete the part below
+                        #sample(.,size = len(.)-round(len(.)*rotate), replace= FALSE)        
+                }) %>% unlist
+            })
+            removed = unlist(realGroups)[!unlist(realGroups) %in% unlist(realGroups2)]
+            realGroups = realGroups2
+            
+            # if rotation is checked, get a subset of the samples. result is rounded. so too low numbers can make it irrelevant
             realGroups2 = lapply(realGroups,function(x){
               if(len(x)==1){
                 warning('Samples with single replicates. Bad brenna! bad!')
@@ -155,18 +173,22 @@ geneSelect = function(designLoc,
               }
               sort(sample(x,len(x)-round(len(x)*rotate)))
               })
-            removed = unlist(realGroups)[!unlist(realGroups) %in% unlist(realGroups2)]
+            removed = c(removed, unlist(realGroups)[!unlist(realGroups) %in% unlist(realGroups2)])
             realGroups = realGroups2
         }
         tempExpr = exprData[unlist(realGroups),]
         tempDesign = design[unlist(realGroups),]
  
         
+    
         
         # replicateMeans ------
         # inefficient if not rotating but if you are not rotating you are only doing it once anyway
         
         indexes = unique(tempDesign[[replicates]])
+        
+      
+        
         repMeanExpr = sapply(1:len(indexes), function(j){
             tryCatch({
                 apply(tempExpr[tempDesign[[replicates]] == indexes[j],], 2,mean)},
