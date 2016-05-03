@@ -42,3 +42,4 @@ readOligoCel = function(GSMs, platform,fileOut=NULL, celdir){
         write.csv(aned, fileOut, row.names=FALSE)
     }
     invisible(aned)
+}
