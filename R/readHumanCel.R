@@ -1,10 +1,10 @@
 library(ogbox)
 library(oligo)
 readHumanCel = function(GSMs, fileOut=NULL, humanDir){
-    browser()
     cels = oligoClasses::list.celfiles(humanDir,listGzipped=T)
     whichCels = sapply(GSMs, function(x){which(grepl(x,cels))})
     sampleCels = cels[whichCels]
+    # browser()
     affyRaw = oligo::read.celfiles(paste0(humanDir,'/',sampleCels))
     exonTS <- oligo::rma(affyRaw, target = "core")
     rm(affyRaw)
@@ -42,4 +42,3 @@ readOligoCel = function(GSMs, platform,fileOut=NULL, celdir){
         write.csv(aned, fileOut, row.names=FALSE)
     }
     invisible(aned)
-}
