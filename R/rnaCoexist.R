@@ -2,6 +2,7 @@ library(parallel)
 library(ogbox)
 library(gplots)
 library(corpcor)
+library(scales)
 rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene names
                       tresholds, # a data frame 1st col gene names 2nd col tresholds
                       genes, # list of genes
