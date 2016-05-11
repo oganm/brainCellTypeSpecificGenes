@@ -9,8 +9,8 @@ geneOut = 'analysis//01.Gene Selection/Fold'
 rotationOut = 'analysis//01.Gene Selection/Rotation'
 rotSelOut = 'analysis/01.Gene Selection/RotSel'
 
-groupNames = c('PyramidalDeep','MajorType')
-# groupNames = 'forContanim'
+groupNames = c('PyramidalDeep','MajorType','DopaSelect')
+#groupNames = 'DopaSelect'
 regionNames = 'Region'
 # many steps requires parallel processes. set to cores cores by default
 cores = 15
