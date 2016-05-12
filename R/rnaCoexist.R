@@ -168,6 +168,7 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
         print('yay density plots')
         
         # heatmaps of existance --------------
+        
         for (i in 1:len(genes)){
             toPlot = (matrix(as.numeric(presence[rownames(presence) %in% genes[[i]],]),ncol=ncol(presence)))
             if (nrow(toPlot)<=1){
@@ -181,6 +182,25 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
                 tryCatch({heatmap.2(t(toPlot),trace= 'none', Rowv=T, Colv=F,dendrogram='none',main = names(genes)[i], col = c('white',muted('blue')))},
                          error = function(e){
                              heatmap.2(t(toPlot),trace= 'none', Rowv=F, Colv=F,dendrogram='none',main = names(genes)[i], col = c('white',muted('blue')))
+                         })
+            })
+            dev.off()
+        }
+        # heatmap of coexpression
+        for (i in 1:len(genes)){
+            toPlot = (matrix(as.numeric(presence[rownames(presence) %in% genes[[i]],]),ncol=ncol(presence)))
+            if (nrow(toPlot)<=1){
+                next
+            }
+            rownames(toPlot) = rownames(presence)[rownames(presence) %in% genes[[i]]]
+            toPlot %<>% t %>% cor
+            png(paste0(plotOut,'/', names(genes)[i],'_corr_heat.png'), height = 800, width= 800)
+            tryCatch({
+                heatmap.2((toPlot),trace= 'none', Rowv=T, Colv=T,dendrogram='column',main = names(genes)[i], col = colorRampPalette(c('white',muted('blue')))(10))
+            }, error = function(e){
+                tryCatch({heatmap.2((toPlot),trace= 'none', Rowv=T, Colv=F,dendrogram='none',main = names(genes)[i], col = colorRampPalette(c('white',muted('blue')))(10))},
+                         error = function(e){
+                             heatmap.2((toPlot),trace= 'none', Rowv=F, Colv=F,dendrogram='none',main = names(genes)[i], col = colorRampPalette(c('white',muted('blue')))(10))
                          })
             })
             dev.off()
