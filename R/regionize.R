@@ -99,3 +99,5 @@ regionize = function(design,regionNames,groupNames, regionHierarchy){
     names(regionGroups) = gsub(pattern='^.*\\.','',names(regionGroups))
     return(regionGroups)
 }
+
+regionize = memoise(regionize)
