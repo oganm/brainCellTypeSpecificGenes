@@ -44,37 +44,37 @@ rnaCoexist(rnaExp,
            cores  = 16)
 
 # treshold run 
-tresholds = read.table('analysis/02.Mouse Single Cell/tresholds')
-tresholds = tresholds[maximExp >= 1,]
-rnaCoexist(rnaExp,
-           tresholds,
-           markerGenes,
-           0.33,
-           F,
-           'analysis//02.Mouse Single Cell/Output/treshold',
-           'analysis//02.Mouse Single Cell/Plots/treshold')
-
-
-# with duplicated genes removed
-tresholds = read.table('analysis/02.Mouse Single Cell/noTresh')
-tresholds = tresholds[maximExp >= 1,]
-for (i in c(0.3333, 0.40, 0.5, 0.6, 0.7, 0.8, 0.9 ,1)){
-    rnaCoexist(rnaExp,
-               tresholds,
-               markerGenes,
-               i,
-               T,
-               paste0('analysis//02.Mouse Single Cell/Output/NoTresholdNoDub',i),
-               paste0('analysis//02.Mouse Single Cell/Plots/NoTresholdNoDup',i))
-}
-
-tresholds = read.table('analysis/02.Mouse Single Cell/tresholds')
-tresholds = tresholds[maximExp >= 1,]
-rnaCoexist(rnaExp,
-           tresholds,
-           markerGenes,
-           1/3,
-           T,
-           'analysis//02.Mouse Single Cell/Output/tresholdNoDup',
-           'analysis//02.Mouse Single Cell/Plots/tresholdNoDup')
+# tresholds = read.table('analysis/02.Mouse Single Cell/tresholds')
+# tresholds = tresholds[maximExp >= 1,]
+# rnaCoexist(rnaExp,
+#            tresholds,
+#            markerGenes,
+#            0.33,
+#            F,
+#            'analysis//02.Mouse Single Cell/Output/treshold',
+#            'analysis//02.Mouse Single Cell/Plots/treshold')
+# 
+# 
+# # with duplicated genes removed
+# tresholds = read.table('analysis/02.Mouse Single Cell/noTresh')
+# tresholds = tresholds[maximExp >= 1,]
+# for (i in c(0.3333, 0.40, 0.5, 0.6, 0.7, 0.8, 0.9 ,1)){
+#     rnaCoexist(rnaExp,
+#                tresholds,
+#                markerGenes,
+#                i,
+#                T,
+#                paste0('analysis//02.Mouse Single Cell/Output/NoTresholdNoDub',i),
+#                paste0('analysis//02.Mouse Single Cell/Plots/NoTresholdNoDup',i))
+# }
+# 
+# tresholds = read.table('analysis/02.Mouse Single Cell/tresholds')
+# tresholds = tresholds[maximExp >= 1,]
+# rnaCoexist(rnaExp,
+#            tresholds,
+#            markerGenes,
+#            1/3,
+#            T,
+#            'analysis//02.Mouse Single Cell/Output/tresholdNoDup',
+#            'analysis//02.Mouse Single Cell/Plots/tresholdNoDup')
 
