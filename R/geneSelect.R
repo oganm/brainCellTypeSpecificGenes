@@ -55,14 +55,8 @@ geneSelect = function(designLoc,
         tempGroupAv2[g26 & g19] =apply(group2[, g26 & g19,drop=F], 2, max)
         # legacy 
         tempGroupAv2[g16 & g29] =apply(group2[, g16 & g29,drop=F], 2, min)
-        
-        
-        #groupAverage1[5124]
-        #groupAverage2[5124]
-        
-        
-        #groupAverage1[7067]
-        #groupAverage2[7067]
+
+
         
         add1 = g19 & g26 & groupAverage1>tempGroupAv2
         add2 = g29 & g16 & tempGroupAv2>groupAverage1
@@ -109,7 +103,7 @@ geneSelect = function(designLoc,
     }
     
 
-    regionGroups = regionize(design,regionNames,groupNames,regionHierarchy)
+    regionGroups = memoReg(design,regionNames,groupNames,regionHierarchy)
     # concatanate new region based groups to design and to groupNames so they'll be processed normally
     if (!noReg){
         design = cbind(design,regionGroups)
