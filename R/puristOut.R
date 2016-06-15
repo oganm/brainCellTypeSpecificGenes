@@ -13,9 +13,10 @@ allPuristOut = function(genesLoc,lilah=F,regex='*'){
 
 puristOut = function(geneLoc, rotationThresh = 0.95,silhouette = 0.5,foldChange = 10,lilah = F){
     filenames = list.files(geneLoc,include.dirs = FALSE)
+    filenames = filenames[!filenames %in% 'removed']
     fileContents = lapply(paste0(geneLoc,'/', filenames), function(x){
         tryCatch(
-            read.table(x),
+            read.table(x,stringsAsFactors=FALSE),
             error = function(e){
                 NULL
             })
