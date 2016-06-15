@@ -1,7 +1,7 @@
 library(dplyr)
 library(lazyeval)
 library(magrittr)
-
+library(memoise)
 
 #' Create cell type annotations per region.
 #' @description For each brain region, based on a defined hierarchy, it choses which samples to take in
@@ -100,4 +100,6 @@ regionize = function(design,regionNames,groupNames, regionHierarchy){
     return(regionGroups)
 }
 
-regionize = memoise(regionize)
+if (!exists('memoReg')){
+    memoReg = memoise(regionize)
+}
