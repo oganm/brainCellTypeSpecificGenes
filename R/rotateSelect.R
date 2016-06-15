@@ -5,7 +5,7 @@ library(doMC)
 library(parallel)
 
 rotateSelect = function(rotationOut,rotSelOut,cores=4, lilah=F, ...){
-
+    
     # so that I wont fry my laptop
     if (detectCores()<cores){ 
         cores = detectCores()
@@ -28,38 +28,46 @@ rotateSelect = function(rotationOut,rotSelOut,cores=4, lilah=F, ...){
     dir.create(paste0(rotSelOut), showWarnings = F)
     
     # for relaxed selection. forces unique selection with matching criteria in puristOut
-   # for (i in loopAroundRel){
-   foreach (i  = loopAroundRel) %dopar% {
+    # for (i in loopAroundRel){
+    foreach (i  = loopAroundRel) %dopar% {
         print(i)
         dir.create(paste0(rotSelOut,'/',i),recursive = T, showWarnings = F)
         files = list.files(paste0(dirFols[1],'/',i))
         # remove the list of removed samples from the mix
-
+        files = files[!files %in% 'removed']
+        
         pureConfidence = vector(mode = 'list', length =len(files))
         for (j in dirFols){
-            pureSample = puristOut(paste0(j,'/',i), lilah, ...)
-            pureConfidence = mapply(c,pureSample,pureConfidence)
+            #print(paste0(j,'/',i))
+            pureSample = puristOut(paste0(j,'/',i), lilah, 
+                                   ...
+            )
+            pureConfidence = mapply(c,pureSample,pureConfidence,SIMPLIFY=FALSE)
+            #print(names(pureConfidence))
+            if(len(pureConfidence)>len(files)){
+                stop('dafaq man')
+            }
         }
         confidence = lapply(pureConfidence,function(x){table(x)/len(dirFols)})
         
-        if (any(grepl('removed',names(confidence)))){
-            confidence = confidence[-which(grepl('removed',names(confidence)))]
-        }
+        #         if (any(grepl('removed',names(confidence)))){
+        #             confidence = confidence[-which(grepl('removed',names(confidence)))]
+        #         }
         
         for (j in 1:len(confidence)){
-           # genes = names(confidence[[j]])[confidence[[j]]>0.95]
+            # genes = names(confidence[[j]])[confidence[[j]]>0.95]
             write.table(confidence[[j]],row.names=F,quote=F,col.names=F,
                         file = paste0(rotSelOut,'/',i,'/',
                                       names(confidence)[j]))
         }
-        return(invisible())
+        #return(invisible())
     }
     
     # for marker genes. just looks at the list and frequencies
     # for (i in loopAroundMar){
     foreach (i = loopAroundMar) %dopar%{
-       print(i)
-       
+        print(i)
+        
         dir.create(paste0(rotSelOut,'/',i),recursive = T, showWarnings = F)
         files = list.files(paste0(dirFols[1],'/',i))
         fileOuts = vector(mode = 'list', length = len(files))
@@ -72,14 +80,14 @@ rotateSelect = function(rotationOut,rotSelOut,cores=4, lilah=F, ...){
                                   })
                 genes = c(genes, as.character(daFile$V1))
             }
-
+            
             geneCounts = table(genes)
             confidence = geneCounts/len(dirFols)
             
             write.table(as.df(confidence), file = paste0(rotSelOut,'/',i,'/',j),
                         row.names = F, col.names = F, quote=F, sep='\t')
         }
-       return(invisible())
+        return(invisible())
         
     }
     
