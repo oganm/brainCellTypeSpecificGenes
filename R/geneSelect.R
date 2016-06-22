@@ -11,14 +11,16 @@ geneSelect = function(designLoc,
                       outLoc,
                       groupNames,
                       regionNames=NULL,
+                      PMID = 'PMID',
                       rotate = NULL,
                       cores = 4,
                       debug=NULL, 
                       sampleName = 'sampleName',
                       replicates = 'originalIndex',
                       foldChangeThresh = 10,
-                      minimumExpression = 8){
-    source('R/regionHierarchy.R')
+                      minimumExpression = 8,
+                      regionHierarchy = NULL){
+    # source('R/regionHierarchy.R')
     # so that I wont fry my laptop
     if (detectCores()<cores){ 
         cores = detectCores()
@@ -131,8 +133,8 @@ geneSelect = function(designLoc,
     
     # the main loop around groups ------
     
-     foreach (i = 1:len(nameGroups)) %dopar% {
-    #for (i in 1:len(nameGroups)){
+    # foreach (i = 1:len(nameGroups)) %dopar% {
+    for (i in 1:len(nameGroups)){
          #debub point for groups
         typeNames = trimNAs(unique(nameGroups[[i]]))
         realGroups = vector(mode = 'list', length = length(typeNames))
@@ -146,7 +148,7 @@ geneSelect = function(designLoc,
             # this part equalizes representation from individual studies when rotating. 
             print('yayay')
             realGroups2 = lapply(realGroups, function(x){
-                articles = design[x,]$PMID
+                articles = design[x,PMID]
                 minRepresentation = articles %>%
                     table(useNA = 'ifany') %>% 
                     min
