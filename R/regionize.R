@@ -11,7 +11,24 @@ library(memoise)
 #' @param regionHierarchy a list of lists that represents the region hierarchy.
 #' @return A list containing character vectors that annotates samples. If the sample will not be considered for the region
 #' it will be represented as an NA, otherwise it'll have the cell type name indicated in the region 
-regionize = function(design,regionNames,groupNames, regionHierarchy){
+regionize = function(design,regionNames,groupNames, regionHierarchy = NULL){
+    
+    # if a hierarchy is not provided, create one with a single layer
+    if (is.null(regionHierarchy)){
+        regionHierarchy = vector(mode='list',
+                                 length = design[,regionNames] %>% unique %>% len)
+        regionHierarchy = lapply(regionHierarchy,function(x){''})
+        names(regionHierarchy)  = design[,regionNames] %>% unique
+    }
+    
+    # if region to parent and to children is not specificed, take the default as true for all
+    if(is.null(design$RegionToParent)[1]){
+        design$RegionToParent = TRUE
+    }
+    if(is.null(design$RegionToChildren)[1]){
+        design$RegionToChildren = TRUE
+    }
+    
     
     regionsTree = regionHierarchy %>% unlist %>% names %>% strsplit(split='\\.') %>% unlist %>% unique
     
