@@ -133,8 +133,8 @@ geneSelect = function(designLoc,
     
     # the main loop around groups ------
     
-    # foreach (i = 1:len(nameGroups)) %dopar% {
-    for (i in 1:len(nameGroups)){
+     foreach (i = 1:len(nameGroups)) %dopar% {
+     #for (i in 1:len(nameGroups)){
          #debub point for groups
         typeNames = trimNAs(unique(nameGroups[[i]]))
         realGroups = vector(mode = 'list', length = length(typeNames))
@@ -153,8 +153,13 @@ geneSelect = function(designLoc,
                     table(useNA = 'ifany') %>% 
                     min
                 lapply (1:len(unique(articles)),function(j){
+                    # this turned into a list because if it is not a list, single length vectors behave differently
+                    # in sample. 
+                    if (len( x[articles %in% unique(articles)[j]]) ==1){
+                        return(x[articles %in% unique(articles)[j]])
+                    }
                     x[articles %in% unique(articles)[j]] %>% 
-                        sample(size=minRepresentation,replace=FALSE) #%>% #if you decide to remove samples per study comment this part in, delete the part below
+                        sample(size=minRepresentation,replace=FALSE) %>% unlist #%>% #if you decide to remove samples per study comment this part in, delete the part below
                         #sample(.,size = len(.)-round(len(.)*rotate), replace= FALSE)        
                 }) %>% unlist
             })
@@ -167,7 +172,7 @@ geneSelect = function(designLoc,
                 warning('Samples with single replicates. Bad brenna! bad!')
                 return(x)
               }
-              sort(sample(x,len(x)-round(len(x)*rotate)))
+              sort(sample(x,len(x)-round(len(x)*rotate)) %>% unlist)
               })
             removed = c(removed, unlist(realGroups)[!unlist(realGroups) %in% unlist(realGroups2)])
             realGroups = realGroups2
