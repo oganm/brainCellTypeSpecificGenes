@@ -28,7 +28,7 @@ readMouseCel = function(GSMs,mouseDir='cel',file=NA){
     }
     
     if (len(affies)>1){newNormalized = mergeChips(affies[[1]],affies[[2]])
-    } else {newNormalized = rma(affies[[1]])}
+    } else {newNormalized = affy::rma(affies[[1]])}
     
     # if any one of them are from the old platform, always use the annotation for that one
     if('GPL339' %in% platforms){
