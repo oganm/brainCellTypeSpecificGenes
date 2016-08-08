@@ -1,4 +1,4 @@
-GSE60862dataPrep = function(filter = 'median'){
+GSE60862dataPrep = function(filter = 'median', output = NULL){
     
     library(ogbox)
     library(data.table)
@@ -11,16 +11,8 @@ GSE60862dataPrep = function(filter = 'median'){
     humanExp = humanExp[!is.na(humanExp$Gene.Symbol),]
     humanExp = humanExp[humanExp$Gene.Symbol!='',]
     
-    # use median expression as elimination treshold
+    humanExp = mostVariable(humanExp,treshold=0) 
     list[geneData,exprData] = sepExpr(humanExp)
-    if (filter == 'median'){
-        medExp = median(unlist(exprData))
-    } else {
-        medExp = filter
-    }
-    humanExp = mostVariable(humanExp,medExp) 
-    list[geneData,exprData] = sepExpr(humanExp)
-    
     # get rid of file extensions
     colnames(exprData) = str_extract(string=colnames(exprData), pattern='GSM.*?(?=\\.)')
     
@@ -44,5 +36,18 @@ GSE60862dataPrep = function(filter = 'median'){
     #softFile = softFile[str_extract(softFile$scanDate,'....-..-..') %in% names(table(str_extract(softFile$scanDate,'....-..-..')))[table(str_extract(softFile$scanDate,'....-..-..'))>1],]
     set.seed(1)
     exprData = ComBat(exprData,batch = kmeans(as.Date(str_extract(softFile$scanDate,'....-..-..')),centers=4)$cluster, mod = model.matrix(~brainRegion,softFile))
+    rowmax = exprData %>% apply(1,max)
+    if (filter == 'median'){
+        medExp = median(unlist(exprData))
+    } else {
+        medExp = filter
+    }
+    exprData = exprData[rowmax>medExp,]
+    
+    if(!is.null(output)){
+        write.csv(exprData, file = paste0(output,'.csv'))
+        write.design(softFile, file = paste0(output,'_des.tsv'))
+    }
+    
     return(list(exprData,softFile))
 }
