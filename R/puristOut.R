@@ -75,8 +75,15 @@ puristOut = function(geneLoc, rotationThresh = 0.95,silhouette = 0.5,foldChange 
     }
 
     puristList = vector(mode = 'list', length = length(geneList))
-    for (i in 1:length(geneList)){
-        puristList[[i]] = trimElement(geneList[[i]], unlist(geneList[-i]))
+    
+    # if the file only has a single column, this means it is the final list. consider putting this to a new 
+    # place later since the point of this function was supposed to be filtering the genes as well
+    if (ncol(fileContents[[1]])!=1){
+        for (i in 1:length(geneList)){
+            puristList[[i]] = trimElement(geneList[[i]], unlist(geneList[-i]))
+        }
+    } else {
+        puristList = geneList
     }
     names(puristList) = names(geneList)
     puristList = lapply(puristList, as.character)
