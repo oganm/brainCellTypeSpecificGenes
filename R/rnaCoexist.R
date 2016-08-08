@@ -3,8 +3,12 @@ library(ogbox)
 library(gplots)
 library(corpcor)
 library(scales)
+library(TeachingDemos)
+library(cowplot)
+library(dplyr)
+
 rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene names
-                      tresholds, # a data frame 1st col gene names 2nd col tresholds
+                      tresholds = NULL, # a data frame 1st col gene names 2nd col tresholds
                       genes, # list of genes
                       # countThreshold = 0.33,
                       dupResolve=T,
@@ -12,11 +16,17 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
                       plotOut = NULL # where to plot shit
                       ,cores = 16){
     print('Im in')
+    
+    if(is.null(tresholds)){
+        tresholds = data.frame(rownames(rnaExp), 1)
+    }
+    
+    
     # browser()
     # returns the total score for a gene list
     countScore = function(geneList#,
                           #countThreshold
-                          ){
+    ){
         #         relevant = presence[geneList,]
         #         relProbs = probs[names(probs) %in% geneList]
         #         relProbs = relProbs[match(rn(relevant), names(relProbs))]
@@ -29,17 +39,17 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
         #         })
         #         )
         matrix = presence[geneList,]
-        cor(matrix %>% t) %>% sm2vec %>% median
-#         geneProbs = apply(matrix,1, function(x){sum(x)/len(x)})
-#         cellP = apply(matrix,2,function(x){
-#             isThere = (geneProbs[x])
-#             isThere %>% log %>% sum %>% exp
-#             #grid = teval(paste0('expand.grid(',paste(rep('c(T,F)',sum(!x)),collapse=', '),')'))
-#             #probMat = cbind(repRow(isThere,nrow(grid)),repRow(geneProbs[!x],nrow(grid)) * grid +
-#             #                    (1-repRow(geneProbs[!x],nrow(grid))) * !grid)
-#             # log(probMat) %>% apply(1,sum) %>% exp %>% sum
-#         })
-#         log(cellP) %>% boxplot.stats %$% out %>% len
+        cor(matrix %>% t) %>% sm2vec # %>% median
+        #         geneProbs = apply(matrix,1, function(x){sum(x)/len(x)})
+        #         cellP = apply(matrix,2,function(x){
+        #             isThere = (geneProbs[x])
+        #             isThere %>% log %>% sum %>% exp
+        #             #grid = teval(paste0('expand.grid(',paste(rep('c(T,F)',sum(!x)),collapse=', '),')'))
+        #             #probMat = cbind(repRow(isThere,nrow(grid)),repRow(geneProbs[!x],nrow(grid)) * grid +
+        #             #                    (1-repRow(geneProbs[!x],nrow(grid))) * !grid)
+        #             # log(probMat) %>% apply(1,sum) %>% exp %>% sum
+        #         })
+        #         log(cellP) %>% boxplot.stats %$% out %>% len
         
     }
     
@@ -60,7 +70,7 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
     
     realProbs = sapply(genesInSeq, countScore#, 
                        #countThreshold
-                       ) 
+    ) 
     print('gene prevelance calculated')
     
     
@@ -93,7 +103,7 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
                 return(NA)
             }
             
-            simuGenes = sapply(genesInSeq[[x]], selectRandom, 1000)
+            simuGenes = sapply(genesInSeq[[x]], selectRandom, 500)
             print('random genes selected')
             # make sure there are no dupes
             if (dupResolve==T){
@@ -110,9 +120,9 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
                         }))
                 }
             }
-       
+            
             a = apply(simuGenes,1,countScore#,countThreshold
-                      )
+            )
             print('rereroro')
             return(a)
         } , mc.cores=cores
@@ -120,28 +130,39 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
     names(simuProbs) = names(genesInSeq)
     print('fake gene correlations calculated')
     # p value calculation
-    ps = sapply(1:len(realProbs), function(i){
-        if (all(simuProbs[[i]] == realProbs[i])){
-            return(NA)
-        }
-        1-ecdf(simuProbs[[i]])(realProbs[i])
+    #     ps = sapply(1:len(realProbs), function(i){
+    #         if (all(simuProbs[[i]] == realProbs[i])){
+    #             return(NA)
+    #         }
+    #         1-ecdf(simuProbs[[i]])(realProbs[i])
+    #     })
+    
+    #print('i'm debugging)
+    ps = sapply(1:len(simuProbs), function(j){
+        print('dunnit')
+        wilcox.test(simuProbs[[j]] %>% as.vector, realProbs[[j]], alternative = 'less')$p.value
     })
+    
+    
     ps = p.adjust(ps, method='fdr')
     print('p values done')
     if(!is.null(dataOut)){
         dir.create(dataOut, recursive = T, showWarnings=F)
-        write.table(data.frame(realProbs,ps),
-                    paste0(dataOut, '/','realProbs'),quote=F)
-        write.table(as.data.frame(simuProbs),
-                    paste0(dataOut,'/','simuProbs'), quote=F, row.names=F)
-        
+        names(ps) = names(realProbs)
+        toWrite = data.frame(ps, 
+                             meanCor = realProbs %>%sapply(mean),
+                             geneCount = genesInSeq %>% sapply(len))
+        write.table(toWrite,
+            paste0(dataOut, '/','realProbs'),quote=F)
+        #write.table(as.data.frame(simuProbs),
+        #            paste0(dataOut,'/','simuProbs'), quote=F, row.names=F)
         for (i in 1:len(genes)){
-            toPlot = (matrix(as.numeric(presence[rownames(presence) %in% genes[[i]],]),ncol=ncol(presence)))
-            if (nrow(toPlot)<=1){
+            toWrite = (matrix(as.numeric(presence[rownames(presence) %in% genes[[i]],]),ncol=ncol(presence)))
+            if (nrow(toWrite)<=1){
                 next
             }
-            rownames(toPlot) = rownames(presence)[rownames(presence) %in% genes[[i]]]
-            write.table(toPlot,
+            rownames(toWrite) = rownames(presence)[rownames(presence) %in% genes[[i]]]
+            write.table(toWrite,
                         paste0(dataOut,'/',names(genes)[i]))
         }
         
@@ -150,23 +171,55 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
     if (!is.null(plotOut)){
         dir.create(plotOut, recursive = T, showWarnings=F)
         
-        for (x in 1:len(simuProbs)){
-
-            print(x)
-            if (is.na(simuProbs[[x]][1])){
-                return(NULL)
-            }
-            png(paste0(plotOut,'/', names(simuProbs)[x],'.png'))
-            plot(density(simuProbs[[x]]), main= names(simuProbs)[x],
-                 xlim=c(min(min(density(simuProbs[[x]])$x),  realProbs[x]),
-                        max(max(density(simuProbs[[x]])$x), realProbs[x])),
-                 xlab='',cex.axis = 1.3, cex.main = 1.5, cex.lab = 1.5)
-            abline(v=realProbs[x],col='red', lwd = 3)
-            mtext(paste0('P = ',ps[x]))
-            dev.off()
-        }
-        print('yay density plots')
+        #         for (x in 1:len(simuProbs)){
+        # 
+        #             print(x)
+        #             if (is.na(simuProbs[[x]][1])){
+        #                 return(NULL)
+        #             }
+        #             png(paste0(plotOut,'/', names(simuProbs)[x],'.png'))
+        #             plot(density(simuProbs[[x]]), main= names(simuProbs)[x],
+        #                  xlim=c(min(min(density(simuProbs[[x]])$x),  realProbs[x]),
+        #                         max(max(density(simuProbs[[x]])$x), realProbs[x])),
+        #                  xlab='',cex.axis = 1.3, cex.main = 1.5, cex.lab = 1.5)
+        #             abline(v=realProbs[x],col='red', lwd = 3)
+        #             mtext(paste0('P = ',ps[x]))
+        #             dev.off()
+        #         }
+        # print('yay density plots')
         
+        # density plots all together ----------
+        #         singificanceRange = simuProbs %>% 
+        #             #lapply(emp.hpd) %>% 
+        #             lapply(quantile, probs = c(0.05,0.95)) %>%
+        #             as.data.frame %>% 
+        #             t %>% as.data.frame
+        #         
+        #         names(singificanceRange) =c('min','max')
+        #         singificanceRange['CellType'] = rownames(singificanceRange)
+        #         singificanceRange['RealProbs'] = realProbs
+        #         
+        #         indivPlots = singificanceRange %>% mutate(pVal = ps, simuProbs = simuProbs) %>% group_by(CellType) %>% 
+        #             do(plots = 
+        #                    {
+        #                        simuVect = .$simuProbs %>% unlist(recursive=T)
+        #                        simuProbs = data.frame(value = simuVect, variable = .$CellType)
+        #                        p = ggplot(data = .[names(.)[-len(names(.))]], aes(x = CellType, y = RealProbs)) + 
+        #                            geom_ogboxvio(data=simuProbs, mapping = aes(x = variable, y= value)) +     
+        #                            # geom_segment(aes(x = CellType, y = min, xend=CellType, yend = max)) + 
+        #                            scale_x_discrete(name="") + scale_y_continuous(name = 'Median correlation') + 
+        #                            theme(axis.title.y = element_text(size=12),
+        #                                  axis.text.x  = element_text(size=14)) +
+        #                            geom_point(size = 5, color = muted('red')) + 
+        #                            geom_segment(size = 2,x = 0.9,xend=1.1, color = muted('red'), aes(y = RealProbs,yend= RealProbs)) + 
+        #                            geom_text(x = 1.11, size = 6,hjust=0, aes(y = RealProbs), label = paste0('p: ', sprintf("%.3f",.$pVal)))
+        #                        switch_axis_position(p,axis='x')
+        #                    }
+        #                )
+        #         
+        #         plot = plot_grid(plotlist=indivPlots$plots, ncol = 3)
+        #         save_plot(paste0(plotOut,'/allProbs.png'),plot, base_height = 10, base_aspect_ratio=1.2)
+        #         
         # heatmaps of existance --------------
         
         for (i in 1:len(genes)){
@@ -208,5 +261,5 @@ rnaCoexist = function(rnaExp, # matrix of expressio values with row names = gene
         print('yay heatmaps')
     }
     print('yay output')
-    invisible(list(data.frame(realProbs,ps), as.data.frame(simuProbs)))
+    #invisible(list(data.frame(realProbs,ps), as.data.frame(simuProbs)))
 }
