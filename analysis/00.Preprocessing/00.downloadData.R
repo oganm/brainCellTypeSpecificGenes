@@ -20,10 +20,12 @@ getGemmaAnnot('GPL5175','data/GemmaAnnots/GPL5175',annotType='noParents')
 getGemmaAnnot('GPL6884','data/GemmaAnnots/GPL6884',annotType='noParents')
 getGemmaAnnot('GPL6244','data/GemmaAnnots/GPL6244',annotType='noParents')
 getGemmaAnnot('GPL8300','data/GemmaAnnots/GPL8300',annotType='noParents')
+getGemmaAnnot('GPL11532','data/GemmaAnnots/GPL11532',annotType='noParents')
+
 
 # full dataset download function
 downloadGSE = function(GSE, platform,datasetName){
-    gseDown(GSE, outdir =paste0('data/ce/',platform))
+    gseDown(GSE, outDir =paste0('data/cel/',platform))
     dir.create(paste0('data/',datasetName))
     softDown(GSE,paste0('data/',datasetName,'/',GSE,'_family.soft.gz'))
     system(paste0('gunzip data/', datasetName,'/',GSE,'_family.soft.gz'))
@@ -36,11 +38,11 @@ downloadGSE = function(GSE, platform,datasetName){
 }
 
 # mouse rna seq data download 02 ------
-download.file(url= 'http://linnarssonlab.org/blobs/cortex/expression_mRNA_17-Aug-2014.txt', 
+download.file(url= 'https://storage.googleapis.com/linnarsson-lab-www-blobs/blobs/cortex/expression_mRNA_17-Aug-2014.txt', 
               destfile='data/linnarsonSingleCell/mouseRNASeq_Zeisel 2015.txt')
 download.file(url = 'http://science.sciencemag.org/highwire/filestream/628248/field_highwire_adjunct_files/1/aaa1934_TableS1.xlsx',
               destfile = 'data/linnarsonSingleCell/markerGenes.xlsx')
-download.file(url = 'http://linnarssonlab.org/blobs/cortex/expression_spikes_17-Aug-2014.txt',
+download.file(url = 'https://storage.googleapis.com/linnarsson-lab-www-blobs/blobs/cortex/expression_spikes_17-Aug-2014.txt',
               destfile = 'data/linnarsonSingleCell/expression_spikes_17-Aug-2014.txt')
 
 linnarsonMarkers = XLConnect::loadWorkbook('data/linnarsonSingleCell/markerGenes.xlsx')
@@ -49,7 +51,7 @@ linnarsonMarkers = linnarsonMarkers[-1,]
 linnarsonMarkers %<>% lapply(trimNAs)
 dput(linnarsonMarkers,file='data/linnarsonSingleCell/markerGenes')
 
-# human rna seq data download from linnarson 03-----
+# human rna seq data download from darmanis 03-----
 gsms = gsmFind('GSE67835')
 dir.create('data/humanRNASeq')
 
@@ -80,7 +82,14 @@ rownames(allExpr) = singleGenes
 colnames(allExpr) = gsub('[.]csv','',basename(colnames(allExpr)))
 write.csv(allExpr,'data/humanRNASeq.csv',quote=F)
 
+softDown('GSE67835',file='data/humanRNAseq.soft.gz')
+system('gunzip data/humanRNAseq.soft.gz')
 
+humanMeta = softParser('data/humanRNAseq.soft',expression=FALSE)
+humanMeta = humanMeta[c('!Sample_characteristics_ch1 = cell type')]
+names(humanMeta) = 'cellType'
+humanMeta$GSM = rownames(humanMeta)
+write.design(humanMeta,'data/humanRNASeq_cellTypes.tsv')
 
 # UCL human microarray data for healthy brain regions -----------
 dir.create('data/UCLregions',showWarnings=FALSE)
@@ -114,7 +123,7 @@ colnames(softData) = c('deatAge',
                        'deathCause',
                        'disease',
                        'invidID',
-                       'postMortemInt',
+                       'postMortemInt',in progress
                        'rnaInt',
                        'sex',
                        'title',
@@ -369,6 +378,87 @@ annotated = gemmaAnnot(norm, 'data/GemmaAnnots/GPL570')
 annotated = mostVariable(annotated)
 write.csv(annotated, paste0('data/parkinsons/','GSE7621_parkinsonsExp.csv'), row.names = F)
 
+# parkinson's brain regions and substantia nigra sub-regions -----------------
+gseDown('GSE8397',regex="A chip",outDir='data/cel/GPL96/')
+gseDown('GSE8397',regex="B chip",outDir='data/cel/GPL97/')
+
+dir.create('data/parkinson_multipleRegions')
+softDown('GSE8397',file='data/parkinson_multipleRegions/GSE8397_family.soft.gz')
+system('gunzip data/parkinson_multipleRegions/GSE8397_family.soft.gz')
+softData = softParser(softFile='data/parkinson_multipleRegions/GSE8397_family.soft',expression=F)
+softData = softData[c("!Sample_characteristics_ch1 = age",
+                    "!Sample_title",
+                    "!Sample_source_name_ch1",
+                    '!Sample_platform_id')]
+softData$GSM = rownames(softData)
+names(softData) = c('Age',
+                    'Title',
+                    'Source',
+                    'Platform',
+                    'GSM')
+
+softData %<>% mutate(Sex = Age %>% 
+                         as.char %>% 
+                         strsplit(':') %>% 
+                         sapply(function(x){x[2]}),
+                     Age = Age %>%
+                         as.char %>% 
+                         strsplit(':') %>% 
+                         sapply(function(x){x[1]}) %>%
+                         gsub('; gender','',x=.) %>% as.numeric,
+                     Title =Title %>% str_extract('.*?(?= -(| )[AB] chip)'),
+                     Region = Title %>% str_extract(regexMerge(c('Superior frontal gyrus','Lateral substantia nigra','Medial substantia nigra'))),
+                     Disease = Title %>% grepl('control',x=.) %>% toColor(palette=c('TRUE' = 'control','FALSE' = 'PD')) %$% cols,
+                     patient = paste0(Disease, str_extract(Title,pattern='[0-9]+')))
+
+# add the file with ph and alzheimer information that you created by hand
+softWithADandPH = read.design('data/parkinson_multipleRegions/GSE8397_des_withADandPH.tsv')
+softData %<>% mutate(pH = softWithADandPH$pH[match(softData$Title,softWithADandPH$Title)],
+                     AD = softWithADandPH$AD[match(softData$Title,softWithADandPH$Title)])
+
+
+readA = softData %>% filter(Platform=='GPL96') %>% select(GSM) %>% unlist
+readB = softData %>% filter(Platform=='GPL97') %>% select(GSM) %>% unlist
+affyA = ReadAffy(filenames=paste0('data//cel//GPL96/',readA,'.cel' ))
+affyB = ReadAffy(filenames=paste0('data//cel//GPL97/',readB,'.cel' ))
+affyA = affy::rma(affyA)
+affyB = affy::rma(affyB)
+affyA = gemmaAnnot(affyA, 'data/GemmaAnnots/GPL96')
+affyB = gemmaAnnot(affyB, 'data/GemmaAnnots/GPL97')
+
+# batch correction
+# softA = softData %>% filter(Platform == 'GPL96')
+# softB = softData %>% filter(Platform =='GPL97')
+# 
+# 
+# batchA = paste0('data//cel//GPL96/',readA,'.cel' ) %>% sapply(celfileDate) %>%as.Date %>% kmeans(centers=4) %$% cluster
+# batchB = paste0('data//cel//GPL97/',readB,'.cel' ) %>% sapply(celfileDate) %>%as.Date %>% kmeans(centers=4) %$% cluster
+# tempFrameA = data.frame(softA,batch = batchA)
+# aExp = ComBat(aExp,batch=batchA, mod = model.matrix(~Disease +Region,softA))
+# bExp = ComBat(bExp,batch=batchB, mod = model.matrix(~Disease +Region,softB))
+
+
+aName = softData %>% filter(Platform=='GPL96') %>% select(Title) %>% unlist 
+bName = softData %>% filter(Platform=='GPL97') %>% select(Title) %>% unlist
+list[aGene,aExp] = affyA %>% sepExpr
+list[bGene,bExp] = affyB %>% sepExpr
+names(aExp) = aName
+names(bExp) = bName
+bExp = bExp[, match(aName,bName)]
+allGenes = rbind(aGene,bGene)
+allExp = rbind(aExp,bExp)
+expTable = cbind(allGenes,allExp) %>% mostVariable(treshold=unlist(allExp) %>% median)
+write.csv(expTable, paste0('data/parkinson_multipleRegions/','GSE8397','_exp.csv'), row.names = F)
+softData %>%
+    filter(Platform=='GPL96') %>%
+    select(-GSM) %>%
+    write.design(file= paste0('data/parkinson_multipleRegions//','GSE8397','_des.tsv'))
+
+
+
+
+
+
 # alzheimer's data ---------
 gseDown('GSE36980',outDir='data/cel/GPL6244/') # change 
 dir.create('data/alzheimers')
@@ -466,7 +556,7 @@ system('gunzip data/allenBrainSingleCells/GSE71585_ERCC_and_tdTomato_counts.csv.
 
 
 # use XLConnect here because it acts funny when used with gplots
-download.file('http://www.nature.com/neuro/journal/vaop/ncurrent/extref/nn.4216-S8.xlsx',
+download.file('http://www.nature.com/neuro/journal/v19/n2/extref/nn.4216-S8.xlsx',
               'data/allenBrainSingleCells/markerGenes.xlsx')
 allenMarkers = XLConnect::loadWorkbook('data/allenBrainSingleCells/markerGenes.xlsx')
 allenMarkers = XLConnect::readWorksheet(allenMarkers, sheet = 1, header = TRUE)
@@ -521,3 +611,49 @@ annotated = gemmaAnnot(norm, 'data/GemmaAnnots/GPL8300')
 names(annotated) = gsub('[.]cel','',names(annotated))
 annotated = mostVariable(annotated, treshold = annotated %>% sepExpr %>% .[[2]] %>% unlist %>% median)
 write.csv(annotated, paste0('data/macacca_HIVdementia/','GSE2377_exp.csv'), row.names = F)
+
+
+# Etienne cortex data
+softData = downloadGSE('GSE71620',platform='GPL11532', datasetName='etienneCortex')
+
+dir.create('data/etienneCortex/')
+softDown('GSE71620','data/etienneCortex/GSE71620_family.soft.gz')
+system('gunzip data/etienneCortex/GSE71620_family.soft.gz')
+list[softData,expression]  = softParser('data/etienneCortex/GSE71620_family.soft',expression=TRUE)
+softData = softParser('data/etienneCortex/GSE71620_family.soft',expression=F)
+
+expTable = sapply(expression, function(x){
+    x$VALUE
+})
+
+softData = softData[,c('!Sample_characteristics_ch1 = age',
+                       '!Sample_characteristics_ch1 = ph',
+                       "!Sample_characteristics_ch1 = pmi",
+                       '!Sample_characteristics_ch1 = race',
+                       "!Sample_characteristics_ch1 = rin",
+                       "!Sample_characteristics_ch1 = Sex",
+                       "!Sample_characteristics_ch1 = tissue",
+                       "!Sample_characteristics_ch1 = tod",
+                       "!Sample_title",
+                       "!Sample_geo_accession"
+                       )]
+
+names(softData) = c('Age',
+                    'pH',
+                    'pmi',
+                    'race',
+                    'rin',
+                    'sex',
+                    'tissue',
+                    'tod',
+                    'title',
+                    'GSM')
+write.design(softData,file='data/etienneCortex/GSE71620_design')
+
+tableGenes = gemmaGeneMatch(probesets=expression[[1]]$ID_REF,chipFile='data/GemmaAnnots/GPL11532')
+
+expTable = data.frame(Gene.Symbol = tableGenes, expTable)
+expTable %<>% filter(Gene.Symbol != '')
+expTable %<>% mostVariable(treshold=expTable[,-1] %>% unlist %>% median)
+
+write.csv(expTable, paste0('data/etienneCortex/','GSE71620_exp.csv'), row.names = F, quote = F)
